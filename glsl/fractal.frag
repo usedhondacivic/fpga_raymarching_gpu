@@ -4,6 +4,8 @@
 uniform vec2 u_resolution;
 uniform vec3 u_camera;
 uniform mat4 u_viewMatrix;
+uniform mat4 u_projectionMatrix;
+uniform mat4 u_modelViewProjectionMatrix;
 
 out vec4 FragColor;
 
@@ -11,6 +13,9 @@ const int MAX_MARCHING_STEPS = 255;
 const float MIN_DIST = 0.0;
 const float MAX_DIST = 700.0;
 const float EPSILON = 0.0001;
+
+#include "lygia/space/lookAt.glsl"
+#include "lygia/space/ratio.glsl"
 
 struct rayInfo
 {
@@ -92,11 +97,13 @@ float diffuseLight(vec3 p, vec3 lightPos) {
 
 void main()
 {
-    vec3 viewDir = rayDirection(70.0, u_resolution.xy, gl_FragCoord.xy);
+    vec3 viewDir = lookAt(-u_camera, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 1.0)) * rayDirection(70.0, u_resolution.xy, gl_FragCoord.xy);
     vec3 eye = u_camera;
-    vec3 worldDir = (transpose(u_viewMatrix) * vec4(viewDir, 0)).xyz;
+    vec4 worldDir = inverse(u_viewMatrix) * vec4(viewDir, 1.0);
+    worldDir /= worldDir.w;
+    vec3 wd = normalize(worldDir.xyz);
 
-    rayInfo info = getRayInfo(eye, worldDir, MIN_DIST, MAX_DIST);
+    rayInfo info = getRayInfo(u_camera, wd, MIN_DIST, MAX_DIST);
     float dist = info.shortestDistance;
     float count = info.count;
     float minRadius = info.minRadius;
@@ -107,7 +114,7 @@ void main()
         return;
     }
 
-    vec3 collisionPoint = eye + dist * worldDir;
+    vec3 collisionPoint = eye + dist * wd;
     float redLight = diffuseLight(collisionPoint, vec3(2.0, 2.0, 2.0)) * 1.5;
     float greenLight = diffuseLight(collisionPoint, vec3(-2.0, 2.0, 2.0)) * 1.5;
     float blueLight = diffuseLight(collisionPoint, vec3(2.0, 2.0, -2.0)) * 1.5;
@@ -115,4 +122,5 @@ void main()
     float ambientOcclusion = -pow(count, 2.0) / 3000.0;
 
     FragColor = vec4(redLight + whiteLight + ambientOcclusion + 0.1, greenLight + whiteLight + ambientOcclusion + 0.1, blueLight + whiteLight + ambientOcclusion + 0.1, 1.0);
+    // FragColor = vec4(gl_FragCoord.xy / u_resolution.xy, 0.0, 1.0);
 }
