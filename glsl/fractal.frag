@@ -99,7 +99,7 @@ void main()
 {
     vec3 viewDir = lookAt(-u_camera, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 1.0)) * rayDirection(70.0, u_resolution.xy, gl_FragCoord.xy);
     vec3 eye = u_camera;
-    vec4 worldDir = inverse(u_viewMatrix) * vec4(viewDir, 1.0);
+    vec4 worldDir = inverse(u_modelViewProjectionMatrix) * vec4(viewDir, 1.0);
     worldDir /= worldDir.w;
     vec3 wd = normalize(worldDir.xyz);
 
