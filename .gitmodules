@@ -1,3 +1,6 @@
 [submodule "glsl/lygia"]
 	path = glsl/lygia
 	url = https://github.com/patriciogonzalezvivo/lygia.git
+[submodule "verilator/vgasim"]
+	path = verilator/vgasim
+	url = git@github.com:ZipCPU/vgasim.git

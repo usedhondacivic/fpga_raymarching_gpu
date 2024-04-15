@@ -54,10 +54,9 @@ float sdTetrahedron(vec3 point)
 	    abs(point.x + point.y) - point.z,
 	    abs(point.x - point.y) + point.z
 	) - 1.0) / sqrt(3.);
+	return sphereSDF(point, 1.0);
 }
 
-// Signed distance to Sierpinski tetrahedron at specified level
-// Rotates over time or with mouse press
 float sdSierpinski(vec3 point, int level)
 {    
     float scale = 1.0;
@@ -113,7 +112,7 @@ rayInfo raymarch() {
     for (int i = 0; i < MAX_MARCHING_STEPS; i++) {
         float dist = sceneSDF(u_camera + depth * dir);
         if (dist < EPSILON) {
-            return rayInfo(vec3(1.0, 1.0, 1.0) * (MAX_MARCHING_STEPS / (i * 10)));
+            return rayInfo(vec3(1.0, 1.0, 1.0) * (MAX_MARCHING_STEPS / (i * 5)));
         }
         depth += dist;
         if (depth >= MAX_DIST) {
