@@ -21,6 +21,7 @@
       "-Wno-unused-but-set-variable",
       "-Wno-unused-parameter",
       "-Wno-unused-variable",
+      "-I/usr/include/SDL2",
       "-DVL_DEBUG=1",
       "-Os",
       "-fstrict-aliasing",

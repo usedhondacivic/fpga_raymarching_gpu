@@ -48,13 +48,14 @@ VERILATOR_FLAGS += --coverage
 
 VERILATOR_FLAGS += -LDFLAGS `sdl2-config --libs`
 VERILATOR_FLAGS += -CFLAGS `sdl2-config --cflags`
+VERILATOR_FLAGS += -top-module top
 # Run Verilator in debug mode
 #VERILATOR_FLAGS += --debug
 # Add this trace to get a backtrace in gdb
 #VERILATOR_FLAGS += --gdbbt
 
 # Input files for Verilator
-VERILATOR_INPUT = -f input.vc top.v simple_480p.v sim_main.cpp
+VERILATOR_INPUT = -f input.vc top.v raymarcher.v floating_point.v simple_480p.v sim_main.cpp
 
 ######################################################################
 default: run
