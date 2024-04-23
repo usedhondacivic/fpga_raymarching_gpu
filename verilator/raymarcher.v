@@ -20,7 +20,7 @@ module sdf (
     input [26:0] point_z,
     output [26:0] distance
 );
-    VEC_mag circle (
+    VEC_norm circle (
         .i_clk(clk),
         .i_x  (point_x),
         .i_y  (point_y),
