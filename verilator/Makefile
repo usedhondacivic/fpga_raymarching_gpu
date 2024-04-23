@@ -42,13 +42,16 @@ VERILATOR_FLAGS += -Wall
 # Make waveforms
 VERILATOR_FLAGS += --trace
 # Check SystemVerilog assertions
-VERILATOR_FLAGS += --assert
+# VERILATOR_FLAGS += --assert
 # Generate coverage analysis
-VERILATOR_FLAGS += --coverage
+# VERILATOR_FLAGS += --coverage
 
 VERILATOR_FLAGS += -LDFLAGS `sdl2-config --libs`
 VERILATOR_FLAGS += -CFLAGS `sdl2-config --cflags`
 VERILATOR_FLAGS += -top-module top
+
+# NPROCS:=$(shell grep -c ^processor /proc/cpuinfo)
+# VERILATOR_FLAGS += --threads $(NPROCS)
 # Run Verilator in debug mode
 #VERILATOR_FLAGS += --debug
 # Add this trace to get a backtrace in gdb

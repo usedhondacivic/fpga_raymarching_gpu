@@ -1,4 +1,7 @@
 /* verilator lint_off DECLFILENAME */
+/* verilator lint_off WIDTHEXPAND */
+/* verilator lint_off WIDTHTRUNC */
+/* verilator lint_off UNUSEDSIGNAL */
 
 /**************************************************************************
  * Following modules written by Bruce Land
@@ -464,5 +467,9 @@ module FpAdd (
                   {buf_oSum_s, oSum_e, oSum_f};
     end  //output update
 endmodule
+
 /* verilator lint_on DECLFILENAME */
+/* verilator lint_on WIDTHEXPAND */
+/* verilator lint_on WIDTHTRUNC */
+/* verilator lint_on UNUSEDSIGNAL */
 

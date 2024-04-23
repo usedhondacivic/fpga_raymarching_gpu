@@ -19,6 +19,13 @@ int main(int argc, char *argv[])
 {
 	Verilated::commandArgs(argc, argv);
 
+	const std::unique_ptr<VerilatedContext> contextp{ new VerilatedContext };
+
+	// Verilator must compute traced signals
+	contextp->traceEverOn(true);
+	// This needs to be called before you create any model
+	contextp->commandArgs(argc, argv);
+
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		printf("SDL init failed.\n");
 		return 1;
@@ -30,7 +37,7 @@ int main(int argc, char *argv[])
 	SDL_Renderer *sdl_renderer = NULL;
 	SDL_Texture *sdl_texture = NULL;
 
-	sdl_window = SDL_CreateWindow("Square",
+	sdl_window = SDL_CreateWindow("raymarcher",
 								  SDL_WINDOWPOS_CENTERED,
 								  SDL_WINDOWPOS_CENTERED,
 								  H_RES,
@@ -70,12 +77,16 @@ int main(int argc, char *argv[])
 	// reset
 	top->sim_rst = 1;
 	top->clk_pix = 0;
-	top->eval();
+	top->clk_50 = 0;
+	top->eval_step();
 	top->clk_pix = 1;
-	top->eval();
+	top->clk_50 = 1;
+	top->eval_step();
 	top->sim_rst = 0;
 	top->clk_pix = 0;
-	top->eval();
+	top->clk_50 = 0;
+	top->eval_step();
+	top->eval_end_step();
 
 	// initialize frame rate
 	uint64_t start_ticks = SDL_GetPerformanceCounter();
@@ -85,16 +96,11 @@ int main(int argc, char *argv[])
 	while (1) {
 		// cycle the clock
 		// VGA @ 25 MHz, clock_50 @ 50 MHz
-		top->clk_pix = 1;
-		top->clk_50 = 1;
-		top->eval();
-		top->clk_50 = 0;
-		top->eval();
-		top->clk_50 = 1;
-		top->clk_pix = 0;
-		top->eval();
-		top->clk_50 = 1;
-		top->eval();
+		contextp->timeInc(1);
+		top->clk_50 = !top->clk_50;
+		if (top->clk_50) {
+			top->clk_pix = !top->clk_pix;
+		}
 
 		// check for quit event
 		SDL_Event e;
@@ -118,7 +124,6 @@ int main(int argc, char *argv[])
 
 		// update texture once per frame (in blanking)
 		if (top->sdl_sy == V_RES && top->sdl_sx == 0) {
-
 			SDL_UpdateTexture(
 			  sdl_texture, NULL, screenbuffer, H_RES * sizeof(Pixel));
 			SDL_RenderClear(sdl_renderer);
@@ -126,6 +131,8 @@ int main(int argc, char *argv[])
 			SDL_RenderPresent(sdl_renderer);
 			frame_count++;
 		}
+
+		top->eval();
 	}
 
 	// calculate frame rate
@@ -133,7 +140,8 @@ int main(int argc, char *argv[])
 	double duration =
 	  ((double)(end_ticks - start_ticks)) / SDL_GetPerformanceFrequency();
 	double fps = (double)frame_count / duration;
-	printf("Frames per second: %.1f\n", fps);
+	printf(
+	  "Number of frames: %lu \nFrames per second: %.1f\n", frame_count, fps);
 
 	top->final(); // simulation done
 
@@ -141,5 +149,7 @@ int main(int argc, char *argv[])
 	SDL_DestroyRenderer(sdl_renderer);
 	SDL_DestroyWindow(sdl_window);
 	SDL_Quit();
+
+	contextp->statsPrintSummary();
 	return 0;
 }

@@ -20,49 +20,48 @@ module sdf (
     input [26:0] point_z,
     output [26:0] distance
 );
-    wire [26:0] x_squared, s_2_x_squared, s_3_x_squared, s_4_x_squared, y_squared, sum;
-    wire [26:0] x_squared[10:0];
-    wire [26:0] y_squared[10:0];
-    wire [26:0] sum[10:0];
-    wire [26:0] inv_sqrt[10:0];
+    wire [26:0] x_squared, y_squared, sum, inv_sqrt, recip_inv_sqrt;
 
     // mul = 1 cycle
     // add = 2 cycles
     // invSqrt = 5 cycles
+
     FpMul x_squared_mul (
         .iA(point_x),
         .iB(point_x),
-        .oProd(x_squared[1])
+        .oProd(x_squared)
     );
     FpMul y_squared_mul (
         .iA(point_y),
         .iB(point_y),
-        .oProd(y_squared[1])
+        .oProd(y_squared)
     );
+
     FpAdd sum_of_squares (
         .iCLK(clk),
-        .iA  (x_squared[1]),
-        .iB  (y_squared[1]),
-        .oSum(sum[3])
+        .iA  (x_squared),
+        .iB  (y_squared),
+        .oSum(sum)
     );
+
     FpInvSqrt inv_sq (
         .iCLK(clk),
-        .iA(sum[3]),
-        .oInvSqrt(inv_sqrt[8])
+        .iA(sum),
+        .oInvSqrt(inv_sqrt)
     );
+
     // Reciprocal
-    FpInvSqrt inv_sq (
+    FpInvSqrt recip_inv_sq (
         .iCLK(clk),
-        .iA(sum),
-        .oInvSqrt(distance)
+        .iA(inv_sqrt),
+        .oInvSqrt(recip_inv_sqrt)
     );
-    FpInvSqrt inv_sq (
-        .iCLK(clk),
-        .iA(sum),
-        .oInvSqrt(distance)
+    FpMul recip (
+        .iA(recip_inv_sqrt),
+        .iB(recip_inv_sqrt),
+        .oProd(distance)
     );
 endmodule
-
 
 module distance_to_color (
     input  [26:0] distance,
@@ -81,33 +80,38 @@ module raymarcher (
     output [7:0] blue
 );
 
+    wire [26:0] pixel_x_fp, pixel_y_fp;
+    Int2Fp px_fp (
+        .iInteger({6'd0, pixel_x}),
+        .oA(pixel_x_fp)
+    );
+    Int2Fp py_fp (
+        .iInteger({6'd0, pixel_y}),
+        .oA(pixel_y_fp)
+    );
     wire [26:0] distance;
     sdf TEST (
         .clk(clk),
-        .point_x({17'd0, pixel_x}),
-        .point_y({17'd0, pixel_y}),
+        .point_x(pixel_x_fp),
+        .point_y(pixel_y_fp),
         .point_z(27'd0),
         .distance(distance)
     );
 
+    // assign red   = distance[15:8];
+    // assign green = distance[15:8];
+    // assign blue  = distance[15:8];
+    // assign red   = distance[7:0];
+    // assign green = distance[7:0];
+    // assign blue  = distance[7:0];
     assign red   = distance[7:0];
     assign green = distance[7:0];
     assign blue  = distance[7:0];
+    // assign red   = pixel_x[9:2];
+    // assign green = pixel_y[9:2];
+    // assign blue  = 8'd0;
 
 endmodule
 
 /* verilator lint_on UNUSEDSIGNAL */
-/* verilator lint_on DECLFILENAME */
-/* verilator lint_on UNUSEDSIGNAL */
-/* verilator lint_on DECLFILENAME */
-/* verilator lint_on DECLFILENAME */
-/* verilator lint_on UNUSEDSIGNAL */
-/* verilator lint_on DECLFILENAME */
-/* verilator lint_on UNUSEDSIGNAL */
-/* verilator lint_on DECLFILENAME */
-/* verilator lint_on DECLFILENAME */
-/* verilator lint_on UNUSEDSIGNAL */
-/* verilator lint_on DECLFILENAME */
-/* verilator lint_on DECLFILENAME */
-/* verilator lint_on DECLFILENAME */
 /* verilator lint_on DECLFILENAME */
