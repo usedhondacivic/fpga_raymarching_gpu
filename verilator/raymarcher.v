@@ -20,47 +20,14 @@ module sdf (
     input [26:0] point_z,
     output [26:0] distance
 );
-    wire [26:0] x_squared, y_squared, sum, inv_sqrt, recip_inv_sqrt;
-
-    // mul = 1 cycle
-    // add = 2 cycles
-    // invSqrt = 5 cycles
-
-    FpMul x_squared_mul (
-        .iA(point_x),
-        .iB(point_x),
-        .oProd(x_squared)
-    );
-    FpMul y_squared_mul (
-        .iA(point_y),
-        .iB(point_y),
-        .oProd(y_squared)
+    VEC_mag circle (
+        .i_clk(clk),
+        .i_x  (point_x),
+        .i_y  (point_y),
+        .i_z  (point_z),
+        .o_mag(distance)
     );
 
-    FpAdd sum_of_squares (
-        .iCLK(clk),
-        .iA  (x_squared),
-        .iB  (y_squared),
-        .oSum(sum)
-    );
-
-    FpInvSqrt inv_sq (
-        .iCLK(clk),
-        .iA(sum),
-        .oInvSqrt(inv_sqrt)
-    );
-
-    // Reciprocal
-    FpInvSqrt recip_inv_sq (
-        .iCLK(clk),
-        .iA(inv_sqrt),
-        .oInvSqrt(recip_inv_sqrt)
-    );
-    FpMul recip (
-        .iA(recip_inv_sqrt),
-        .iB(recip_inv_sqrt),
-        .oProd(distance)
-    );
 endmodule
 
 module distance_to_color (
