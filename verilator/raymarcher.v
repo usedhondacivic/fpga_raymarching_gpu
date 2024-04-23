@@ -36,6 +36,20 @@ module distance_to_color (
     output [ 7:0] green,
     output [ 7:0] blue
 );
+    wire [15:0] distance_int;
+    Fp2Int dist_fp_2_int (
+        .iA(distance),
+        .oInteger(distance_int)
+    );
+    wire in_radius;
+    assign in_radius = distance_int < 100;
+
+    wire [7:0] col;
+    // assign col   = (in_radius == 1'b1) ? 8'b11111111 : distance_int[9:2];
+    assign col   = {8{in_radius}};
+    assign red   = col;
+    assign blue  = col;
+    assign green = col;
 endmodule
 
 module raymarcher (
@@ -57,31 +71,19 @@ module raymarcher (
         .oA(pixel_y_fp)
     );
     wire [26:0] distance_fp;
-    sdf TEST (
+    sdf SDF (
         .clk(clk),
         .point_x(pixel_x_fp),
         .point_y(pixel_y_fp),
         .point_z(27'd0),
         .distance(distance_fp)
     );
-    wire [15:0] distance;
-    Fp2Int dist_fp_2_int (
-        .iA(distance_fp),
-        .oInteger(distance)
+    distance_to_color COLOR (
+        .distance(distance_fp),
+        .red(red),
+        .green(green),
+        .blue(blue)
     );
-
-    // assign red   = distance[15:8];
-    // assign green = distance[15:8];
-    // assign blue  = distance[15:8];
-    // assign red   = distance[7:0];
-    // assign green = distance[7:0];
-    // assign blue  = distance[7:0];
-    assign red   = distance[9:2];
-    assign green = distance[9:2];
-    assign blue  = distance[9:2];
-    // assign red   = pixel_x[9:2];
-    // assign green = pixel_y[9:2];
-    // assign blue  = 8'd0;
 
 endmodule
 

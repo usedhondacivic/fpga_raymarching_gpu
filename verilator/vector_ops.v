@@ -39,7 +39,7 @@ module VEC_dot (
     wire [26:0] x_prod, y_prod, z_prod, xy_sum;
     FpMul x_prod_mul (
         .iA(i_a_x),
-        .iB(i_b_y),
+        .iB(i_b_x),
         .oProd(x_prod)
     );
     FpMul y_prod_mul (

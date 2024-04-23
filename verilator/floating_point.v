@@ -3,7 +3,6 @@
 /* verilator lint_off WIDTHTRUNC */
 /* verilator lint_off UNUSEDSIGNAL */
 
-
 /**************************************************************************
  * Following modules written by Bruce Land
  * March 2017
