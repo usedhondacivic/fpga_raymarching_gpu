@@ -67,6 +67,43 @@ module VEC_dot (
 
 endmodule
 
+module VEC_dot_4 (
+    input i_clk,
+    input [26:0] i_a_x,
+    input [26:0] i_a_y,
+    input [26:0] i_a_z,
+    input [26:0] i_a_w,
+    input [26:0] i_b_x,
+    input [26:0] i_b_y,
+    input [26:0] i_b_z,
+    input [26:0] i_b_w,
+    output [26:0] o_dot
+);
+    // 4 + 2 = 6 cycles to complete
+    wire [26:0] w_prod, dot;
+    FpMul w_prod_mul (
+        .iA(i_a_w),
+        .iB(i_b_w),
+        .oProd(w_prod)
+    );
+    VEC_dot xyz_dot (
+        .i_clk(i_clk),
+        .i_a_x(i_a_x),
+        .i_a_y(i_a_y),
+        .i_a_z(i_a_z),
+        .i_b_x(i_b_x),
+        .i_b_y(i_b_y),
+        .i_b_z(i_b_z),
+        .o_dot(dot)
+    );
+    FpAdd xy_sum_add (
+        .iCLK(i_clk),
+        .iA  (dot),
+        .iB  (w_prod),
+        .oSum(o_dot)
+    );
+endmodule
+
 module VEC_norm (
     input i_clk,
     input [26:0] i_x,
@@ -151,12 +188,40 @@ module VEC_3x3_mult (
     input [26:0] i_x,
     input [26:0] i_y,
     input [26:0] i_z,
-    output [26:0] o_mult_x,
-    output [26:0] o_mult_y,
-    output [26:0] o_mult_z
+    output [26:0] o_x,
+    output [26:0] o_y,
+    output [26:0] o_z
 );
-
-
+    VEC_dot x (
+        .i_clk(i_clk),
+        .i_a_x(i_m_1_1),
+        .i_a_y(i_m_1_2),
+        .i_a_z(i_m_1_3),
+        .i_b_x(i_x),
+        .i_b_y(i_y),
+        .i_b_z(i_z),
+        .o_dot(o_x)
+    );
+    VEC_dot y (
+        .i_clk(i_clk),
+        .i_a_x(i_m_2_1),
+        .i_a_y(i_m_2_2),
+        .i_a_z(i_m_2_3),
+        .i_b_x(i_x),
+        .i_b_y(i_y),
+        .i_b_z(i_z),
+        .o_dot(o_y)
+    );
+    VEC_dot z (
+        .i_clk(i_clk),
+        .i_a_x(i_m_3_1),
+        .i_a_y(i_m_3_2),
+        .i_a_z(i_m_3_3),
+        .i_b_x(i_x),
+        .i_b_y(i_y),
+        .i_b_z(i_z),
+        .o_dot(o_z)
+    );
 endmodule
 
 // uh oh
@@ -181,12 +246,60 @@ module VEC_4x4_mult (
     input [26:0] i_x,
     input [26:0] i_y,
     input [26:0] i_z,
-    output [26:0] o_mult_x,
-    output [26:0] o_mult_y,
-    output [26:0] o_mult_z
+    input [26:0] i_w,
+    output [26:0] o_x,
+    output [26:0] o_y,
+    output [26:0] o_z
 );
 
-endmodule
+    VEC_dot_4 x (
+        .i_clk(i_clk),
+        .i_a_x(i_m_1_1),
+        .i_a_y(i_m_1_2),
+        .i_a_z(i_m_1_3),
+        .i_a_w(i_m_1_4),
+        .i_b_x(i_x),
+        .i_b_y(i_y),
+        .i_b_z(i_z),
+        .i_b_w(i_w),
+        .o_dot(o_x)
+    );
+    VEC_dot_4 y (
+        .i_clk(i_clk),
+        .i_a_x(i_m_2_1),
+        .i_a_y(i_m_2_2),
+        .i_a_z(i_m_2_3),
+        .i_a_w(i_m_2_4),
+        .i_b_x(i_x),
+        .i_b_y(i_y),
+        .i_b_z(i_z),
+        .i_b_w(i_w),
+        .o_dot(o_y)
+    );
+    VEC_dot_4 z (
+        .i_clk(i_clk),
+        .i_a_x(i_m_3_1),
+        .i_a_y(i_m_3_2),
+        .i_a_z(i_m_3_3),
+        .i_a_w(i_m_3_4),
+        .i_b_x(i_x),
+        .i_b_y(i_y),
+        .i_b_z(i_z),
+        .i_b_w(i_w),
+        .o_dot(o_z)
+    );
+    VEC_dot_4 w (
+        .i_clk(i_clk),
+        .i_a_x(i_m_4_1),
+        .i_a_y(i_m_4_2),
+        .i_a_z(i_m_4_3),
+        .i_a_w(i_m_4_4),
+        .i_b_x(i_x),
+        .i_b_y(i_y),
+        .i_b_z(i_z),
+        .i_b_w(i_w),
+        .o_dot(o_w)
+    );
 
-/* verilator lint_on UNUSEDSIGNAL */
-/* verilator lint_on DECLFILENAME */
+endmodule
+/* verilator lint_on UNUSEDSIGNAL */  /* verilator lint_on DECLFILENAME */
