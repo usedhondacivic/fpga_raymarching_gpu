@@ -1,4 +1,6 @@
 #include "Vtop.h"
+#include "fp_27.h"
+#include "linmath.h"
 #include <SDL.h>
 #include <stdio.h>
 #include <verilated.h>
@@ -87,6 +89,39 @@ int main(int argc, char *argv[])
 	top->clk_50 = 0;
 	top->eval_step();
 	top->eval_end_step();
+
+	// init look at matrix
+	vec3 eye = { -5.0, -5.0, -5.0 };
+	vec3 target = { 0.0, 0.0, 0.0 };
+	vec3 up = { 0.0, 1.0, 0.0 };
+
+	top->eye_x = floatToReg27(eye[0]);
+	top->eye_y = floatToReg27(eye[1]);
+	top->eye_z = floatToReg27(eye[2]);
+
+	vec3 neg_eye = { 5.0, 5.0, 5.0 };
+	vec3 target_minus_eye;
+	vec3_sub(target_minus_eye, target, neg_eye);
+	vec3 z_axis;
+	vec3_norm(z_axis, target_minus_eye);
+	vec3 z_cross_up;
+	vec3_mul_cross(z_cross_up, z_axis, up);
+	vec3 x_axis;
+	vec3_norm(x_axis, z_cross_up);
+	vec3 y_axis;
+	vec3_mul_cross(y_axis, z_axis, x_axis);
+
+	// NOTE: glsl stores matricies in column major order (unlike row major, like
+	// you're likely used to)
+	top->look_at_1_1 = floatToReg27(x_axis[0]);
+	top->look_at_2_1 = floatToReg27(x_axis[1]);
+	top->look_at_3_1 = floatToReg27(x_axis[2]);
+	top->look_at_1_2 = floatToReg27(y_axis[0]);
+	top->look_at_2_2 = floatToReg27(y_axis[1]);
+	top->look_at_3_2 = floatToReg27(y_axis[2]);
+	top->look_at_1_3 = floatToReg27(z_axis[0]);
+	top->look_at_2_3 = floatToReg27(z_axis[1]);
+	top->look_at_3_3 = floatToReg27(z_axis[2]);
 
 	// initialize frame rate
 	uint64_t start_ticks = SDL_GetPerformanceCounter();

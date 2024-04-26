@@ -6,21 +6,16 @@ module FP_sqrt (
     input [26:0] i_a,
     output [26:0] o_sqrt
 );
-    // 5 + 5 = 10 cycles to complete
-    wire [26:0] inv_sqrt, recip_inv_sqrt;
+    // 10 cycles to complete
+    wire [26:0] inv_sqrt;
     FpInvSqrt inv_sq (
         .iCLK(i_clk),
         .iA(i_a),
         .oInvSqrt(inv_sqrt)
     );
-    FpInvSqrt recip_inv_sq (
-        .iCLK(i_clk),
-        .iA(inv_sqrt),
-        .oInvSqrt(recip_inv_sqrt)
-    );
     FpMul recip (
-        .iA(recip_inv_sqrt),
-        .iB(recip_inv_sqrt),
+        .iA(inv_sqrt),
+        .iB(i_a),
         .oProd(o_sqrt)
     );
 endmodule
@@ -111,7 +106,7 @@ module VEC_norm (
     input [26:0] i_z,
     output [26:0] o_mag
 );
-    // 4 + 10 = 14 cycles to complete
+    // 4 + 5 = 9 cycles to complete
     wire [26:0] x_squared, y_squared, z_squared, dot;
     VEC_dot sqr_dot (
         .i_clk(i_clk),
@@ -154,7 +149,7 @@ module VEC_normalize (
     );
     FpInvSqrt inv_sq (
         .iCLK(i_clk),
-        .iA(sum),
+        .iA(dot),
         .oInvSqrt(inv_sqrt)
     );
     FpMul x_scale_mul (

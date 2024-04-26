@@ -2,17 +2,30 @@
 
 `define CORDW 10 // Coordinate width 2^10 = 1024
 
+/* verilator lint_off UNUSEDSIGNAL */
 module top (
     /* VGA Simulation */
-    input                   clk_50,   // 50 MHz clock
-    input                   clk_pix,  // pixel clock
-    input                   sim_rst,  // sim reset
-    output reg [`CORDW-1:0] sdl_sx,   // horizontal SDL position
-    output reg [`CORDW-1:0] sdl_sy,   // vertical SDL position
-    output reg              sdl_de,   // data enable (low in blanking interval)
-    output reg [       7:0] sdl_r,    // 8-bit red
-    output reg [       7:0] sdl_g,    // 8-bit green
-    output reg [       7:0] sdl_b     // 8-bit blue
+    input                   clk_50,       // 50 MHz clock
+    input                   clk_pix,      // pixel clock
+    input                   sim_rst,      // sim reset
+    input      [      26:0] eye_x,
+    input      [      26:0] eye_y,
+    input      [      26:0] eye_z,
+    input      [      26:0] look_at_1_1,  // Look at matrix, calculated on the HPS
+    input      [      26:0] look_at_1_2,  // https://lygia.xyz/space/lookAt
+    input      [      26:0] look_at_1_3,
+    input      [      26:0] look_at_2_1,
+    input      [      26:0] look_at_2_2,
+    input      [      26:0] look_at_2_3,
+    input      [      26:0] look_at_3_1,
+    input      [      26:0] look_at_3_2,
+    input      [      26:0] look_at_3_3,
+    output reg [`CORDW-1:0] sdl_sx,       // horizontal SDL position
+    output reg [`CORDW-1:0] sdl_sy,       // vertical SDL position
+    output reg              sdl_de,       // data enable (low in blanking interval)
+    output reg [       7:0] sdl_r,        // 8-bit red
+    output reg [       7:0] sdl_g,        // 8-bit green
+    output reg [       7:0] sdl_b         // 8-bit blue
 );
 
     // display sync signals and coordinates
@@ -37,6 +50,15 @@ module top (
         .clk(clk_50),
         .pixel_x(sx),
         .pixel_y(sy),
+        .look_at_1_1(look_at_1_1),
+        .look_at_1_2(look_at_1_2),
+        .look_at_1_3(look_at_1_3),
+        .look_at_2_1(look_at_2_1),
+        .look_at_2_2(look_at_2_2),
+        .look_at_2_3(look_at_2_3),
+        .look_at_3_1(look_at_3_1),
+        .look_at_3_2(look_at_3_2),
+        .look_at_3_3(look_at_3_3),
         .red(red),
         .green(green),
         .blue(blue)
@@ -87,3 +109,4 @@ endmodule
 // 	sdl_g  <= {2{display_g}};
 // 	sdl_b  <= {2{display_b}};
 // end
+/* verilator lint_on UNUSEDSIGNAL */
