@@ -98,6 +98,7 @@ vec3 fragToWorldVector() {
             vec3(0.0, 0.0, 0.0),
             vec3(0.0, 1.0, 0.0)
         ) * normalize(vec3(xy, -z));
+    // Seems like you don't need this normalize
     return normalize(viewDir.xyz);
 }
 

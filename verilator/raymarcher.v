@@ -89,6 +89,8 @@ module frag_to_world_vector (
     wire signed [`CORDW:0] x_signed, y_signed, x_adj, y_adj;
     assign x_signed = {1'b0, i_x};
     assign y_signed = {1'b0, i_y};
+
+    // vec2 xy = gl_FragCoord.xy - u_resolution.xy / 2.0;
     assign x_adj = x_signed - (`SCREEN_WIDTH >> 1);
     assign y_adj = y_signed - (`SCREEN_HEIGHT >> 1);
     wire [26:0] x_fp, y_fp, z_fp, res_x_fp, res_y_fp;
@@ -108,11 +110,20 @@ module frag_to_world_vector (
         .iInteger(`SCREEN_HEIGHT),
         .oA(res_y_fp)
     );
+
+    // float z = u_resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
     FpMul z_calc (
         .iA(res_y_fp),
         .iB(`FOV_MAGIC_NUMBER),
         .oProd(z_fp)
     );
+
+
+    // vec3 viewDir = lookAt(
+    //     -u_camera, vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0)
+    // ) * normalize(
+    //     vec3(xy, -z)
+    // );
     wire [26:0] x_norm_fp, y_norm_fp, z_norm_fp;
     VEC_normalize hi (
         .i_clk(i_clk),
@@ -123,7 +134,11 @@ module frag_to_world_vector (
         .o_norm_y(y_norm_fp),
         .o_norm_z(z_norm_fp)
     );
-    wire [26:0] z_transformed_fp;
+    wire [26:0] z_neg_fp;
+    FpNegate negate_z (
+        .iA(z_norm_fp),
+        .oNegative(z_neg_fp)
+    );
     VEC_3x3_mult oh_god (
         .i_clk(i_clk),
         .i_m_1_1(look_at_1_1),
@@ -137,14 +152,10 @@ module frag_to_world_vector (
         .i_m_3_3(look_at_3_3),
         .i_x(x_norm_fp),
         .i_y(y_norm_fp),
-        .i_z(z_norm_fp),
+        .i_z(z_neg_fp),
         .o_x(o_x),
         .o_y(o_y),
-        .o_z(z_transformed_fp)
-    );
-    FpNegate negate_z (
-        .iA(z_transformed_fp),
-        .oNegative(o_z)
+        .o_z(o_z)
     );
     // FpNegate negate_z (
     //     .iA(z_fp),
@@ -250,17 +261,17 @@ module raymarcher (
     wire [26:0] frag_scale_x, frag_scale_y, frag_scale_z;
     FpMul frag_scale_x_calc (
         .iA(frag_dir_x),
-        .iB(27'h2210000),
+        .iB(27'h2180000),
         .oProd(frag_scale_x)
     );
     FpMul frag_scale_y_calc (
         .iA(frag_dir_y),
-        .iB(27'h2210000),
+        .iB(27'h2180000),
         .oProd(frag_scale_y)
     );
     FpMul frag_scale_z_calc (
         .iA(frag_dir_z),
-        .iB(27'h2210000),
+        .iB(27'h2180000),
         .oProd(frag_scale_z)
     );
     wire signed [15:0] frag_dir_x_int, frag_dir_y_int, frag_dir_z_int;
@@ -282,9 +293,9 @@ module raymarcher (
     //     .green(green),
     //     .blue(blue)
     // );
-    assign red   = frag_dir_x_int[9:2];
-    assign blue  = frag_dir_y_int[9:2];
-    assign green = frag_dir_z_int[9:2];
+    assign red   = frag_dir_x_int[7:0] + 8'd128;
+    assign blue  = frag_dir_y_int[7:0] + 8'd128;
+    assign green = frag_dir_z_int[7:0] + 8'd128;
 endmodule
 /* verilator lint_on UNUSEDSIGNAL */
 /* verilator lint_on DECLFILENAME */
