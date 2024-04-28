@@ -5,7 +5,7 @@
 `define SCREEN_WIDTH 640
 `define SCREEN_HEIGHT 480
 
-`define NUM_ITR 20
+`define NUM_ITR 10
 
 // `define EPSILON 27'h1ee6666 // 0.1
 `define EPSILON 27'h1e11eb8 //0.01
@@ -41,6 +41,7 @@ module distance_to_color (
     );
     wire [7:0] col;
     assign col   = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
+    // assign col   = hit ? 8'd255 : 8'd0;
     assign red   = col;
     assign blue  = col;
     assign green = col;
@@ -228,7 +229,7 @@ module sdf (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 11
+    parameter SDF_STAGES = 10
 ) (
     input clk,
     input [26:0] point_x,
@@ -241,31 +242,38 @@ module ray_stage #(
     output reg [26:0] o_point_x,
     output reg [26:0] o_point_y,
     output reg [26:0] o_point_z,
+    output reg [26:0] o_frag_dir_x,
+    output reg [26:0] o_frag_dir_y,
+    output reg [26:0] o_frag_dir_z,
     output reg [26:0] o_depth,
     output reg hit,
     output reg max_depth
 );
-    wire [26:0] point_x_pipe[SDF_STAGES:0], point_y_pipe[SDF_STAGES:0], point_z_pipe[SDF_STAGES:0];
-    wire [26:0] frag_dir_x_pipe[SDF_STAGES:0], frag_dir_y_pipe[SDF_STAGES:0], frag_dir_z_pipe[SDF_STAGES:0];
+    reg [26:0] point_x_pipe[SDF_STAGES:0], point_y_pipe[SDF_STAGES:0], point_z_pipe[SDF_STAGES:0];
+    reg [26:0]
+        frag_dir_x_pipe[SDF_STAGES+2:0],
+        frag_dir_y_pipe[SDF_STAGES+2:0],
+        frag_dir_z_pipe[SDF_STAGES+2:0];
+    wire [26:0] distance;
     wire [26:0] scaled_frag_x, scaled_frag_y, scaled_frag_z;
     wire [26:0] new_point_x, new_point_y, new_point_z;
     wire [26:0] new_depth;
-    wire [26:0] max_depth_pipe;
-    wire hit_pipe;
+    reg max_depth_pipe;
+    reg hit_pipe;
 
     sdf SDF (
         .clk(clk),
-        .point_x(point_x[i]),
-        .point_y(point_y[i]),
-        .point_z(point_z[i]),
+        .point_x(point_x),
+        .point_y(point_y),
+        .point_z(point_z),
         .distance(distance)
     );
 
     VEC_el_mul scale_mul (
         .i_clk(clk),
-        .i_a_x(frag_dir_x[SDF_STAGES]),
-        .i_a_y(frag_dir_y[SDF_STAGES]),
-        .i_a_z(frag_dir_z[SDF_STAGES]),
+        .i_a_x(frag_dir_x_pipe[SDF_STAGES]),
+        .i_a_y(frag_dir_y_pipe[SDF_STAGES]),
+        .i_a_z(frag_dir_z_pipe[SDF_STAGES]),
         .i_b_x(distance),
         .i_b_y(distance),
         .i_b_z(distance),
@@ -311,19 +319,28 @@ module ray_stage #(
         o_point_x <= new_point_x;
         o_point_y <= new_point_y;
         o_point_z <= new_point_z;
+        o_frag_dir_x <= frag_dir_x_pipe[SDF_STAGES+1];
+        o_frag_dir_y <= frag_dir_y_pipe[SDF_STAGES+1];
+        o_frag_dir_z <= frag_dir_z_pipe[SDF_STAGES+1];
+        frag_dir_x_pipe[SDF_STAGES+1] <= frag_dir_x_pipe[SDF_STAGES];
+        frag_dir_y_pipe[SDF_STAGES+1] <= frag_dir_y_pipe[SDF_STAGES];
+        frag_dir_z_pipe[SDF_STAGES+1] <= frag_dir_z_pipe[SDF_STAGES];
         o_depth <= new_depth;
+
     end
 
     genvar i;
     generate
         for (i = 0; i < SDF_STAGES; i = i + 1) begin : g_ray_pipeline
             always @(posedge clk) begin
+                /* verilator lint_off BLKSEQ*/
                 point_x_pipe[0] = point_x;
                 point_y_pipe[0] = point_y;
                 point_z_pipe[0] = point_z;
                 frag_dir_x_pipe[0] = frag_dir_x;
                 frag_dir_y_pipe[0] = frag_dir_y;
                 frag_dir_z_pipe[0] = frag_dir_z;
+                /* verilator lint_on BLKSEQ */
                 point_x_pipe[i+1] <= point_x_pipe[i];
                 point_y_pipe[i+1] <= point_y_pipe[i];
                 point_z_pipe[i+1] <= point_z_pipe[i];
@@ -382,7 +399,7 @@ module raymarcher (
         .oA(pixel_y_fp)
     );
 
-    reg [26:0] frag_dir_x, frag_dir_y, frag_dir_z;
+    reg [26:0] frag_dir_x[`NUM_ITR:0], frag_dir_y[`NUM_ITR:0], frag_dir_z[`NUM_ITR:0];
     frag_to_world_vector F (
         .i_clk(clk),
         .i_x(pixel_x),
@@ -396,126 +413,55 @@ module raymarcher (
         .look_at_3_1(look_at_3_1),
         .look_at_3_2(look_at_3_2),
         .look_at_3_3(look_at_3_3),
-        .o_x(frag_dir_x),
-        .o_y(frag_dir_y),
-        .o_z(frag_dir_z)
+        .o_x(frag_dir_x[0]),
+        .o_y(frag_dir_y[0]),
+        .o_z(frag_dir_z[0])
     );
 
     reg [26:0] depth[`NUM_ITR:0];
-    reg [26:0] point_x[`NUM_ITR:0];
-    reg [26:0] point_y[`NUM_ITR:0];
-    reg [26:0] point_z[`NUM_ITR:0];
+    reg [26:0] point_x[`NUM_ITR:0], point_y[`NUM_ITR:0], point_z[`NUM_ITR:0];
     reg hit[`NUM_ITR:0];
-    reg exceed_max_dist[`NUM_ITR:0];
+    reg max_depth[`NUM_ITR:0];
     reg [9:0] itr_before_hit[`NUM_ITR:0];
 
     always @(posedge clk) begin
         hit[0] <= 0;
         itr_before_hit[0] <= 0;
-        exceed_max_dist[0] <= 0;
+        max_depth[0] <= 0;
         depth[0] <= 0;
         point_x[0] <= eye_x;
         point_y[0] <= eye_y;
         point_z[0] <= eye_z;
     end
-    genvar i;
+    genvar n;
     generate
-        for (i = 0; i < `NUM_ITR; i = i + 1) begin : g_ray_stages
-            wire [26:0] distance,
-				scaled_frag_y,
-				scaled_frag_x,
-				scaled_frag_z,
-				new_point_x,
-				new_point_y,
-				new_point_z,
-				new_depth;
-            reg new_hit, new_hit_pipe;
-            reg max_dist, max_dist_pipe;
-            sdf SDF (
+        for (n = 0; n < `NUM_ITR; n = n + 1) begin : g_ray_stages
+            ray_stage its_not_a_stage_mom (
                 .clk(clk),
-                .point_x(point_x[i]),
-                .point_y(point_y[i]),
-                .point_z(point_z[i]),
-                .distance(distance)
+                .point_x(point_x[n]),
+                .point_y(point_y[n]),
+                .point_z(point_z[n]),
+                .frag_dir_x(frag_dir_x[n]),
+                .frag_dir_y(frag_dir_y[n]),
+                .frag_dir_z(frag_dir_z[n]),
+                .depth(depth[n]),
+                .o_point_x(point_x[n+1]),
+                .o_point_y(point_y[n+1]),
+                .o_point_z(point_z[n+1]),
+                .o_frag_dir_x(frag_dir_x[n+1]),
+                .o_frag_dir_y(frag_dir_y[n+1]),
+                .o_frag_dir_z(frag_dir_z[n+1]),
+                .o_depth(depth[n+1]),
+                .hit(hit[n+1]),
+                .max_depth(max_depth[n+1])
             );
-            FpMul x_scale_mul (
-                .iA(frag_dir_x),
-                .iB(distance),
-                .oProd(scaled_frag_x)
-            );
-            FpAdd new_x_p_add (
-                .iCLK(clk),
-                .iA  (scaled_frag_x),
-                .iB  (point_x[i]),
-                .oSum(new_point_x)
-            );
-            FpMul y_scale_mul (
-                .iA(frag_dir_y),
-                .iB(distance),
-                .oProd(scaled_frag_y)
-            );
-            FpAdd new_y_p_add (
-                .iCLK(clk),
-                .iA  (scaled_frag_y),
-                .iB  (point_y[i]),
-                .oSum(new_point_y)
-            );
-            FpMul z_scale_mul (
-                .iA(frag_dir_z),
-                .iB(distance),
-                .oProd(scaled_frag_z)
-            );
-            FpAdd new_z_p_add (
-                .iCLK(clk),
-                .iA  (scaled_frag_z),
-                .iB  (point_z[i]),
-                .oSum(new_point_z)
-            );
-            FpAdd new_depth_add (
-                .iCLK(clk),
-                .iA  (depth[i]),
-                .iB  (distance),
-                .oSum(new_depth)
-            );
-            FpCompare ep_compare (
-                .iA(`EPSILON),
-                .iB(distance),
-                .oA_larger(new_hit_pipe)
-            );
-            FpCompare max_dist_compare (
-                .iA(new_depth),
-                .iB(`MAX_DIST),
-                .oA_larger(max_dist_pipe)
-            );
-            always @(posedge clk) begin
-                if (~new_hit && ~hit[i]) begin
-                    itr_before_hit[i+1] <= itr_before_hit[i] + 1;
-                end else begin
-                    itr_before_hit[i+1] <= itr_before_hit[i];
-                end
-                new_hit <= new_hit_pipe;
-                max_dist <= max_dist_pipe;
-                hit[i+1] <= hit[i] ? hit[i] : new_hit;
-                exceed_max_dist[i+1] <= exceed_max_dist[i] ? exceed_max_dist[i] : max_dist;
-                if (new_hit | max_dist) begin
-                    depth[i+1]   <= depth[i];
-                    point_x[i+1] <= point_x[i];
-                    point_y[i+1] <= point_y[i];
-                    point_z[i+1] <= point_z[i];
-                end else begin
-                    depth[i+1]   <= new_depth;
-                    point_x[i+1] <= new_point_x;
-                    point_y[i+1] <= new_point_y;
-                    point_z[i+1] <= new_point_z;
-                end
-            end
         end
     endgenerate
 
     distance_to_color COLOR (
         .distance(depth[`NUM_ITR]),
         .num_itr(itr_before_hit[`NUM_ITR]),
-        .hit(hit[`NUM_ITR] & ~exceed_max_dist[`NUM_ITR]),
+        .hit(hit[`NUM_ITR] & ~max_depth[`NUM_ITR]),
         .red(red),
         .green(green),
         .blue(blue)
