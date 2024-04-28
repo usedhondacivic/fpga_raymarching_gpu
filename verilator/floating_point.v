@@ -190,15 +190,14 @@ module FpCompare (
     always @(*) begin
         if (A_s == 0 && B_s == 1) begin  // A positive, B negative
             oA_larger = 1'b1;
-        end
-        if (A_s == 1 && B_s == 0) begin  // A negative, B positive
+        end else if (A_s == 1 && B_s == 0) begin  // A negative, B positive
             oA_larger = 1'b0;
-        end
-        if (A_s == 0 && B_s == 0) begin  // A positive, B positive
+        end else if (A_s == 0 && B_s == 0) begin  // A positive, B positive
             oA_larger = A_mag_larger;
-        end
-        if (A_s == 1 && B_s == 1) begin  // A negative, B negative
+        end else if (A_s == 1 && B_s == 1) begin  // A negative, B negative
             oA_larger = ~A_mag_larger;
+        end else begin
+            oA_larger = 0;
         end
     end
 endmodule  //FpCompare

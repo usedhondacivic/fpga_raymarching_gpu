@@ -7,6 +7,8 @@
 
 `define NUM_ITR 5
 
+`define EPSILON 27'h1ee6666 // 0.1
+
 // glsl float z = u_resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
 // see get_fov_magic_num.c and fractal.frag
 `define FOV_MAGIC_NUMBER 27'h1fc0000
@@ -15,20 +17,22 @@
 /* verilator lint_off UNUSEDSIGNAL */
 
 module distance_to_color (
-    input  [26:0] distance,
-    output [ 7:0] red,
-    output [ 7:0] green,
-    output [ 7:0] blue
+    input [26:0] distance,
+    input hit,
+    output [7:0] red,
+    output [7:0] green,
+    output [7:0] blue
 );
-    wire [15:0] distance_int;
-    Fp2Int dist_fp_2_int (
-        .iA(distance),
-        .oInteger(distance_int)
-    );
+    // wire [15:0] distance_int;
+    // Fp2Int dist_fp_2_int (
+    //     .iA(distance),
+    //     .oInteger(distance_int)
+    // );
     wire [7:0] col;
-    assign red   = distance_int[7:0];
-    assign blue  = distance_int[7:0];
-    assign green = distance_int[7:0];
+    assign col   = hit ? 8'd255 : 8'd0;
+    assign red   = col;
+    assign blue  = col;
+    assign green = col;
 endmodule
 
 /*
@@ -147,12 +151,19 @@ module sdf (
     input [26:0] point_z,
     output [26:0] distance
 );
+    wire [26:0] norm;
     VEC_norm circle (
         .i_clk(clk),
         .i_x  (point_x),
         .i_y  (point_y),
         .i_z  (point_z),
-        .o_mag(distance)
+        .o_mag(norm)
+    );
+    FpAdd norm_sum (
+        .iCLK(clk),
+        .iA  (norm),
+        .iB  (27'h5fc0000),  // -1.0
+        .oSum(distance)
     );
 endmodule
 
@@ -223,13 +234,17 @@ module raymarcher (
         .o_z(frag_dir_z)
     );
 
-    reg [26:0] depth  [`NUM_ITR:0];
+    reg [26:0] depth[`NUM_ITR:0];
     reg [26:0] point_x[`NUM_ITR:0];
     reg [26:0] point_y[`NUM_ITR:0];
     reg [26:0] point_z[`NUM_ITR:0];
+    reg hit[`NUM_ITR:0];
+    reg [9:0] itr_before_hit[`NUM_ITR:0];
 
     always @(posedge clk) begin
-        depth[0]   <= 0;
+        hit[0] <= 0;
+        itr_before_hit[0] <= 0;
+        depth[0] <= 0;
         point_x[0] <= eye_x;
         point_y[0] <= eye_y;
         point_z[0] <= eye_z;
@@ -245,6 +260,7 @@ module raymarcher (
 				new_point_y,
 				new_point_z,
 				new_depth;
+            wire new_hit;
             sdf SDF (
                 .clk(clk),
                 .point_x(point_x[i]),
@@ -291,8 +307,17 @@ module raymarcher (
                 .iB  (distance),
                 .oSum(new_depth)
             );
+            FpCompare ep_compare (
+                .iA(`EPSILON),
+                .iB(distance),
+                .oA_larger(new_hit)
+            );
             always @(posedge clk) begin
-                depth[i+1]   <= new_depth;
+                if (~new_hit && ~hit[i]) begin
+                    itr_before_hit[i+1] <= itr_before_hit[i] + 1;
+                end
+                hit[i+1] <= hit[i] ? 1 : new_hit;
+                depth[i+1] <= new_depth;
                 point_x[i+1] <= new_point_x;
                 point_y[i+1] <= new_point_y;
                 point_z[i+1] <= new_point_z;
@@ -302,6 +327,7 @@ module raymarcher (
 
     distance_to_color COLOR (
         .distance(depth[`NUM_ITR-1]),
+        .hit(hit[`NUM_ITR-1]),
         .red(red),
         .green(green),
         .blue(blue)
