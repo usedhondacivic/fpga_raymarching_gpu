@@ -18,6 +18,7 @@
 
 module distance_to_color (
     input [26:0] distance,
+    input [9:0] num_itr,
     input hit,
     output [7:0] red,
     output [7:0] green,
@@ -29,7 +30,7 @@ module distance_to_color (
     //     .oInteger(distance_int)
     // );
     wire [7:0] col;
-    assign col   = hit ? 8'd255 : 8'd0;
+    assign col   = hit ? 8'd255 - (num_itr[7:0] * 20) : 8'd0;
     assign red   = col;
     assign blue  = col;
     assign green = col;
@@ -315,8 +316,10 @@ module raymarcher (
             always @(posedge clk) begin
                 if (~new_hit && ~hit[i]) begin
                     itr_before_hit[i+1] <= itr_before_hit[i] + 1;
+                end else begin
+                    itr_before_hit[i+1] <= itr_before_hit[i];
                 end
-                hit[i+1] <= hit[i] ? 1 : new_hit;
+                hit[i+1] <= hit[i] ? hit[i] : new_hit;
                 depth[i+1] <= new_depth;
                 point_x[i+1] <= new_point_x;
                 point_y[i+1] <= new_point_y;
@@ -327,11 +330,13 @@ module raymarcher (
 
     distance_to_color COLOR (
         .distance(depth[`NUM_ITR-1]),
+        .num_itr(itr_before_hit[`NUM_ITR-1]),
         .hit(hit[`NUM_ITR-1]),
         .red(red),
         .green(green),
         .blue(blue)
     );
 endmodule
+
 /* verilator lint_on UNUSEDSIGNAL */
 /* verilator lint_on DECLFILENAME */
