@@ -5,36 +5,14 @@
 `define SCREEN_WIDTH 640
 `define SCREEN_HEIGHT 480
 
+`define NUM_ITR 5
+
 // glsl float z = u_resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
 // see get_fov_magic_num.c and fractal.frag
 `define FOV_MAGIC_NUMBER 27'h1fc0000
 
 /* verilator lint_off DECLFILENAME */
 /* verilator lint_off UNUSEDSIGNAL */
-/*
-* sdf
-* INPUTS:
-	* clk - module clock
-	* point_x, _y, _z - x, y, z position of sample point (floating point)
-* OUTPUTS:
-	* distance - distance to scene (floating point)
-*/
-module sdf (
-    input clk,
-    input [26:0] point_x,
-    input [26:0] point_y,
-    input [26:0] point_z,
-    output [26:0] distance
-);
-    VEC_norm circle (
-        .i_clk(clk),
-        .i_x  (point_x),
-        .i_y  (point_y),
-        .i_z  (point_z),
-        .o_mag(distance)
-    );
-
-endmodule
 
 module distance_to_color (
     input  [26:0] distance,
@@ -47,12 +25,7 @@ module distance_to_color (
         .iA(distance),
         .oInteger(distance_int)
     );
-    wire in_radius;
-    assign in_radius = distance_int < 100;
-
     wire [7:0] col;
-    // assign col   = (in_radius == 1'b1) ? 8'b11111111 : distance_int[9:2];
-    assign col   = {8{in_radius}};
     assign red   = distance_int[7:0];
     assign blue  = distance_int[7:0];
     assign green = distance_int[7:0];
@@ -157,19 +130,30 @@ module frag_to_world_vector (
         .o_y(o_y),
         .o_z(o_z)
     );
-    // FpNegate negate_z (
-    //     .iA(z_fp),
-    //     .oNegative(z_neg_fp)
-    // );
-    // VEC_normalize test (
-    //     .i_clk(i_clk),
-    //     .i_x(x_fp),
-    //     .i_y(y_fp),
-    //     .i_z(z_neg_fp),
-    //     .o_norm_x(o_x),
-    //     .o_norm_y(o_y),
-    //     .o_norm_z(o_z)
-    // );
+endmodule
+
+/*
+* sdf
+* INPUTS:
+	* clk - module clock
+	* point_x, _y, _z - x, y, z position of sample point (floating point)
+* OUTPUTS:
+	* distance - distance to scene (floating point)
+*/
+module sdf (
+    input clk,
+    input [26:0] point_x,
+    input [26:0] point_y,
+    input [26:0] point_z,
+    output [26:0] distance
+);
+    VEC_norm circle (
+        .i_clk(clk),
+        .i_x  (point_x),
+        .i_y  (point_y),
+        .i_z  (point_z),
+        .o_mag(distance)
+    );
 endmodule
 
 /*
@@ -202,6 +186,9 @@ module raymarcher (
     input      [      26:0] look_at_3_1,
     input      [      26:0] look_at_3_2,
     input      [      26:0] look_at_3_3,
+    input      [      26:0] eye_x,
+    input      [      26:0] eye_y,
+    input      [      26:0] eye_z,
     output     [       7:0] red,
     output     [       7:0] green,
     output     [       7:0] blue
@@ -216,30 +203,7 @@ module raymarcher (
         .iInteger({6'd0, pixel_y}),
         .oA(pixel_y_fp)
     );
-    wire [26:0] distance_fp;
-    sdf SDF (
-        .clk(clk),
-        .point_x(pixel_x_fp),
-        .point_y(pixel_y_fp),
-        .point_z(27'd0),
-        .distance(distance_fp)
-    );
 
-    // input i_clk,
-    // input [`CORDW-1:0] i_x,  // integers, screen coords
-    // input [`CORDW-1:0] i_y,
-    // input [26:0] look_at_1_1,  // Look at matrix, calculated on the HPS
-    // input [26:0] look_at_1_2,  // https://lygia.xyz/space/lookAt
-    // input [26:0] look_at_1_3,
-    // input [26:0] look_at_2_1,
-    // input [26:0] look_at_2_2,
-    // input [26:0] look_at_2_3,
-    // input [26:0] look_at_3_1,
-    // input [26:0] look_at_3_2,
-    // input [26:0] look_at_3_3,
-    // output [26:0] o_x,  // floats, world space vector
-    // output [26:0] o_y,
-    // output [26:0] o_z
     wire [26:0] frag_dir_x, frag_dir_y, frag_dir_z;
     frag_to_world_vector F (
         .i_clk(clk),
@@ -258,44 +222,77 @@ module raymarcher (
         .o_y(frag_dir_y),
         .o_z(frag_dir_z)
     );
-    wire [26:0] frag_scale_x, frag_scale_y, frag_scale_z;
-    FpMul frag_scale_x_calc (
-        .iA(frag_dir_x),
-        .iB(27'h2180000),
-        .oProd(frag_scale_x)
+
+    reg [26:0] depth  [`NUM_ITR:0];
+    reg [26:0] point_x[`NUM_ITR:0];
+    reg [26:0] point_y[`NUM_ITR:0];
+    reg [26:0] point_z[`NUM_ITR:0];
+
+    always @(posedge clk) begin
+        depth[0]   <= 0;
+        point_x[0] <= eye_x;
+        point_y[0] <= eye_y;
+        point_z[0] <= eye_z;
+    end
+    genvar i;
+    generate
+        for (i = 0; i < `NUM_ITR - 1; i = i + 1) begin : g_ray_stages
+            wire [26:0] distance, scaled_frag_y, scaled_frag_x, scaled_frag_z;
+            sdf SDF (
+                .clk(clk),
+                .point_x(point_x[i]),
+                .point_y(point_y[i]),
+                .point_z(point_z[i]),
+                .distance(distance)
+            );
+            FpMul x_scale_mul (
+                .iA(frag_dir_x),
+                .iB(distance),
+                .oProd(scaled_frag_x)
+            );
+            FpAdd new_x_p_add (
+                .iCLK(clk),
+                .iA  (scaled_frag_x),
+                .iB  (point_x[i]),
+                .oSum(point_x[i+1])
+            );
+            FpMul y_scale_mul (
+                .iA(frag_dir_y),
+                .iB(distance),
+                .oProd(scaled_frag_y)
+            );
+            FpAdd new_y_p_add (
+                .iCLK(clk),
+                .iA  (scaled_frag_y),
+                .iB  (point_y[i]),
+                .oSum(point_y[i+1])
+            );
+            FpMul z_scale_mul (
+                .iA(frag_dir_z),
+                .iB(distance),
+                .oProd(scaled_frag_z)
+            );
+            FpAdd new_z_p_add (
+                .iCLK(clk),
+                .iA  (scaled_frag_z),
+                .iB  (point_z[i]),
+                .oSum(point_z[i+1])
+            );
+            FpAdd new_depth_add (
+                .iCLK(clk),
+                .iA  (depth[i]),
+                .iB  (distance),
+                .oSum(depth[i+1])
+            );
+        end
+    endgenerate
+
+    distance_to_color COLOR (
+        .distance(depth[`NUM_ITR-1]),
+        .red(red),
+        .green(green),
+        .blue(blue)
     );
-    FpMul frag_scale_y_calc (
-        .iA(frag_dir_y),
-        .iB(27'h2180000),
-        .oProd(frag_scale_y)
-    );
-    FpMul frag_scale_z_calc (
-        .iA(frag_dir_z),
-        .iB(27'h2180000),
-        .oProd(frag_scale_z)
-    );
-    wire signed [15:0] frag_dir_x_int, frag_dir_y_int, frag_dir_z_int;
-    Fp2Int frag_dir_x_2_int (
-        .iA(frag_scale_x),
-        .oInteger(frag_dir_x_int)
-    );
-    Fp2Int frag_dir_y_2_int (
-        .iA(frag_scale_y),
-        .oInteger(frag_dir_y_int)
-    );
-    Fp2Int frag_dir_z_2_int (
-        .iA(frag_scale_z),
-        .oInteger(frag_dir_z_int)
-    );
-    // distance_to_color COLOR (
-    //     .distance(distance_fp),
-    //     .red(red),
-    //     .green(green),
-    //     .blue(blue)
-    // );
-    assign red   = frag_dir_x_int[7:0] + 8'd128;
-    assign blue  = frag_dir_y_int[7:0] + 8'd128;
-    assign green = frag_dir_z_int[7:0] + 8'd128;
 endmodule
 /* verilator lint_on UNUSEDSIGNAL */
 /* verilator lint_on DECLFILENAME */

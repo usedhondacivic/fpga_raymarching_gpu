@@ -59,6 +59,9 @@ module top (
         .look_at_3_1(look_at_3_1),
         .look_at_3_2(look_at_3_2),
         .look_at_3_3(look_at_3_3),
+        .eye_x(eye_x),
+        .eye_y(eye_y),
+        .eye_z(eye_z),
         .red(red),
         .green(green),
         .blue(blue)
