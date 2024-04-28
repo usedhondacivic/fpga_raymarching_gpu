@@ -237,7 +237,14 @@ module raymarcher (
     genvar i;
     generate
         for (i = 0; i < `NUM_ITR - 1; i = i + 1) begin : g_ray_stages
-            wire [26:0] distance, scaled_frag_y, scaled_frag_x, scaled_frag_z;
+            wire [26:0] distance,
+				scaled_frag_y,
+				scaled_frag_x,
+				scaled_frag_z,
+				new_point_x,
+				new_point_y,
+				new_point_z,
+				new_depth;
             sdf SDF (
                 .clk(clk),
                 .point_x(point_x[i]),
@@ -254,7 +261,7 @@ module raymarcher (
                 .iCLK(clk),
                 .iA  (scaled_frag_x),
                 .iB  (point_x[i]),
-                .oSum(point_x[i+1])
+                .oSum(new_point_x)
             );
             FpMul y_scale_mul (
                 .iA(frag_dir_y),
@@ -265,7 +272,7 @@ module raymarcher (
                 .iCLK(clk),
                 .iA  (scaled_frag_y),
                 .iB  (point_y[i]),
-                .oSum(point_y[i+1])
+                .oSum(new_point_y)
             );
             FpMul z_scale_mul (
                 .iA(frag_dir_z),
@@ -276,14 +283,20 @@ module raymarcher (
                 .iCLK(clk),
                 .iA  (scaled_frag_z),
                 .iB  (point_z[i]),
-                .oSum(point_z[i+1])
+                .oSum(new_point_z)
             );
             FpAdd new_depth_add (
                 .iCLK(clk),
                 .iA  (depth[i]),
                 .iB  (distance),
-                .oSum(depth[i+1])
+                .oSum(new_depth)
             );
+            always @(posedge clk) begin
+                depth[i+1]   <= new_depth;
+                point_x[i+1] <= new_point_x;
+                point_y[i+1] <= new_point_y;
+                point_z[i+1] <= new_point_z;
+            end
         end
     endgenerate
 
