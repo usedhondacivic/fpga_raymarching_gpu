@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 
 			eye[0] = 5.0 * cos(frame_count * M_PI / 60.0);
 			eye[1] = 5.0 * sin(frame_count * M_PI / 60.0);
-			eye[2] = 1.0;
+			eye[2] = 5.0;
 			set_uniforms(top, eye);
 		}
 

@@ -20,6 +20,68 @@ module FP_sqrt (
     );
 endmodule
 
+module VEC_add (
+    input i_clk,
+    input [26:0] i_a_x,
+    input [26:0] i_a_y,
+    input [26:0] i_a_z,
+    input [26:0] i_b_x,
+    input [26:0] i_b_y,
+    input [26:0] i_b_z,
+    output [26:0] o_add_x,
+    output [26:0] o_add_y,
+    output [26:0] o_add_z
+);
+    FpAdd x_sub (
+        .iCLK(i_clk),
+        .iA  (i_a_x),
+        .iB  (i_b_x),
+        .oSum(o_add_x)
+    );
+    FpAdd y_sub (
+        .iCLK(i_clk),
+        .iA  (i_a_y),
+        .iB  (i_b_y),
+        .oSum(o_add_y)
+    );
+    FpAdd z_sub (
+        .iCLK(i_clk),
+        .iA  (i_a_z),
+        .iB  (i_b_z),
+        .oSum(o_add_z)
+    );
+endmodule
+
+module VEC_el_mul (
+    input i_clk,
+    input [26:0] i_a_x,
+    input [26:0] i_a_y,
+    input [26:0] i_a_z,
+    input [26:0] i_b_x,
+    input [26:0] i_b_y,
+    input [26:0] i_b_z,
+    output [26:0] o_el_mul_x,
+    output [26:0] o_el_mul_y,
+    output [26:0] o_el_mul_z
+);
+    FpMul x_mul (
+        .iA(i_a_x),
+        .iB(i_b_x),
+        .oProd(o_el_mul_x)
+    );
+    FpMul y_mul (
+        .iA(i_a_y),
+        .iB(i_b_y),
+        .oProd(o_el_mul_y)
+    );
+    FpMul z_mul (
+        .iA(i_a_z),
+        .iB(i_b_z),
+        .oProd(o_el_mul_z)
+    );
+endmodule
+
+
 module VEC_dot (
     input i_clk,
     input [26:0] i_a_x,
