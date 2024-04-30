@@ -172,9 +172,9 @@ int main(int argc, char *argv[])
 			SDL_RenderPresent(sdl_renderer);
 			frame_count++;
 
-			eye[0] = 5.0 * cos(frame_count * M_PI / 60.0);
-			eye[1] = 5.0 * sin(frame_count * M_PI / 60.0);
-			eye[2] = 5.0;
+			eye[0] = 7.0 * cos(frame_count * M_PI / 60.0);
+			eye[1] = 7.0 * sin(frame_count * M_PI / 60.0);
+			eye[2] = 7.0;
 			set_uniforms(top, eye);
 		}
 

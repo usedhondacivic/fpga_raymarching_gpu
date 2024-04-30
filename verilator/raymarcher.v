@@ -5,10 +5,10 @@
 `define SCREEN_WIDTH 640
 `define SCREEN_HEIGHT 480
 
-`define NUM_ITR 20
+`define NUM_ITR 10
 
-// `define EPSILON 27'h1ee6666 // 0.1
-`define EPSILON 27'h1e11eb8 //0.01
+`define EPSILON 27'h1ee6666 // 0.1
+// `define EPSILON 27'h1e11eb8 //0.01
 // `define EPSILON 27'h1f26666 // 0.2
 
 `define MAX_DIST 27'h2180000
@@ -40,14 +40,14 @@ module distance_to_color (
         .oInteger(distance_int)
     );
     wire [7:0] col;
-    // assign col   = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
-    // assign col   = 8'd255 - distance_int[7:0] + 8'd125;
-    // assign col   = hit ? 8'd255 : 8'd0;
-    assign green = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
+    // assign green = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
     assign blue  = hit ? 8'd255 : 8'd0;
-    assign red   = 8'd255 - distance_int[7:0] + 8'd125;
-    // assign red   = col;
-    // assign green = col;
+    // assign red   = 8'd255 - distance_int[7:0] + 8'd125;
+    // assign col   = hit ? 8'd255 : 8'd0;
+    assign col   = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
+    // assign col   = 8'd255 - distance_int[7:0] + 8'd125;
+    assign red   = col;
+    assign green = col;
     // assign blue  = col;
 endmodule
 
