@@ -5,11 +5,11 @@
 `define SCREEN_WIDTH 640
 `define SCREEN_HEIGHT 480
 
-`define NUM_ITR 10
+`define NUM_ITR 20
 
-`define EPSILON 27'h1ee6666 // 0.1
+// `define EPSILON 27'h1ee6666 // 0.1
 // `define EPSILON 27'h1e11eb8 //0.01
-// `define EPSILON 27'h1f26666 // 0.2
+`define EPSILON 27'h1f26666 // 0.2
 
 `define MAX_DIST 27'h2180000
 
@@ -40,12 +40,15 @@ module distance_to_color (
         .oInteger(distance_int)
     );
     wire [7:0] col;
-    assign col   = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
+    // assign col   = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
     // assign col   = 8'd255 - distance_int[7:0] + 8'd125;
     // assign col   = hit ? 8'd255 : 8'd0;
-    assign red   = col;
-    assign blue  = col;
-    assign green = col;
+    assign green = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
+    assign blue  = hit ? 8'd255 : 8'd0;
+    assign red   = 8'd255 - distance_int[7:0] + 8'd125;
+    // assign red   = col;
+    // assign green = col;
+    // assign blue  = col;
 endmodule
 
 /*
@@ -329,7 +332,7 @@ module ray_stage #(
         o_frag_dir_x <= frag_dir_x_pipe[SDF_STAGES+1];
         o_frag_dir_y <= frag_dir_y_pipe[SDF_STAGES+1];
         o_frag_dir_z <= frag_dir_z_pipe[SDF_STAGES+1];
-        o_depth <= hit ? depth_pipe[SDF_STAGES+1] : new_depth;
+        o_depth <= (hit | max_depth) ? depth_pipe[SDF_STAGES+1] : new_depth;
     end
 
     genvar i;
@@ -337,13 +340,13 @@ module ray_stage #(
         for (i = 0; i < SDF_STAGES + 1; i = i + 1) begin : g_ray_pipeline
             always @(posedge clk) begin
                 /* verilator lint_off BLKSEQ*/
-                point_x_pipe[0] <= point_x;
-                point_y_pipe[0] <= point_y;
-                point_z_pipe[0] <= point_z;
-                frag_dir_x_pipe[0] <= frag_dir_x;
-                frag_dir_y_pipe[0] <= frag_dir_y;
-                frag_dir_z_pipe[0] <= frag_dir_z;
-                depth_pipe[0] <= depth;
+                point_x_pipe[0] = point_x;
+                point_y_pipe[0] = point_y;
+                point_z_pipe[0] = point_z;
+                frag_dir_x_pipe[0] = frag_dir_x;
+                frag_dir_y_pipe[0] = frag_dir_y;
+                frag_dir_z_pipe[0] = frag_dir_z;
+                depth_pipe[0] = depth;
                 /* verilator lint_on BLKSEQ */
                 point_x_pipe[i+1] <= point_x_pipe[i];
                 point_y_pipe[i+1] <= point_y_pipe[i];

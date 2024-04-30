@@ -1,13 +1,15 @@
 /* verilator lint_off DECLFILENAME */
 /* verilator lint_off UNUSEDSIGNAL */
 
-module FP_sqrt (
+module FP_sqrt #(
+    parameter PIPELINE_STAGES = 4
+) (
     input i_clk,
     input [26:0] i_a,
     output [26:0] o_sqrt
 );
-    // 10 cycles to complete
     wire [26:0] inv_sqrt;
+    reg  [26:0] i_a_pipe [PIPELINE_STAGES:0];
     FpInvSqrt inv_sq (
         .iCLK(i_clk),
         .iA(i_a),
@@ -15,9 +17,20 @@ module FP_sqrt (
     );
     FpMul recip (
         .iA(inv_sqrt),
-        .iB(i_a),
+        .iB(i_a_pipe[PIPELINE_STAGES]),
         .oProd(o_sqrt)
     );
+    genvar i;
+    generate
+        for (i = 0; i < PIPELINE_STAGES; i = i + 1) begin : g_ray_pipeline
+            always @(posedge i_clk) begin
+                /* verilator lint_off BLKSEQ*/
+                i_a_pipe[0] = i_a;
+                /* verilator lint_on BLKSEQ */
+                i_a_pipe[i+1] <= i_a_pipe[i];
+            end
+        end
+    endgenerate
 endmodule
 
 module VEC_add (
@@ -32,19 +45,19 @@ module VEC_add (
     output [26:0] o_add_y,
     output [26:0] o_add_z
 );
-    FpAdd x_sub (
+    FpAdd x_add (
         .iCLK(i_clk),
         .iA  (i_a_x),
         .iB  (i_b_x),
         .oSum(o_add_x)
     );
-    FpAdd y_sub (
+    FpAdd y_add (
         .iCLK(i_clk),
         .iA  (i_a_y),
         .iB  (i_b_y),
         .oSum(o_add_y)
     );
-    FpAdd z_sub (
+    FpAdd z_add (
         .iCLK(i_clk),
         .iA  (i_a_z),
         .iB  (i_b_z),
@@ -92,8 +105,8 @@ module VEC_dot (
     input [26:0] i_b_z,
     output [26:0] o_dot
 );
-    // 2 + 2 = 4 cycles to complete
-    wire [26:0] x_prod, y_prod, z_prod, xy_sum;
+    wire [26:0] x_prod, y_prod, xy_sum;
+    reg [26:0] z_prod_pipe[1:0];
     FpMul x_prod_mul (
         .iA(i_a_x),
         .iB(i_b_x),
@@ -107,7 +120,7 @@ module VEC_dot (
     FpMul z_prod_mul (
         .iA(i_a_z),
         .iB(i_b_z),
-        .oProd(z_prod)
+        .oProd(z_prod_pipe[0])
     );
     FpAdd xy_sum_add (
         .iCLK(i_clk),
@@ -118,47 +131,13 @@ module VEC_dot (
     FpAdd xyz_sum (
         .iCLK(i_clk),
         .iA  (xy_sum),
-        .iB  (z_prod),
+        .iB  (z_prod_pipe[1]),
         .oSum(o_dot)
     );
+    always @(posedge i_clk) begin
+        z_prod_pipe[1] <= z_prod_pipe[0];
+    end
 
-endmodule
-
-module VEC_dot_4 (
-    input i_clk,
-    input [26:0] i_a_x,
-    input [26:0] i_a_y,
-    input [26:0] i_a_z,
-    input [26:0] i_a_w,
-    input [26:0] i_b_x,
-    input [26:0] i_b_y,
-    input [26:0] i_b_z,
-    input [26:0] i_b_w,
-    output [26:0] o_dot
-);
-    // 4 + 2 = 6 cycles to complete
-    wire [26:0] w_prod, dot;
-    FpMul w_prod_mul (
-        .iA(i_a_w),
-        .iB(i_b_w),
-        .oProd(w_prod)
-    );
-    VEC_dot xyz_dot (
-        .i_clk(i_clk),
-        .i_a_x(i_a_x),
-        .i_a_y(i_a_y),
-        .i_a_z(i_a_z),
-        .i_b_x(i_b_x),
-        .i_b_y(i_b_y),
-        .i_b_z(i_b_z),
-        .o_dot(dot)
-    );
-    FpAdd xy_sum_add (
-        .iCLK(i_clk),
-        .iA  (dot),
-        .iB  (w_prod),
-        .oSum(o_dot)
-    );
 endmodule
 
 module VEC_norm (
@@ -188,7 +167,9 @@ module VEC_norm (
 endmodule
 
 
-module VEC_normalize (
+module VEC_normalize #(
+    parameter PIPELINE_STAGES = 4
+) (
     input i_clk,
     input [26:0] i_x,
     input [26:0] i_y,
@@ -197,8 +178,13 @@ module VEC_normalize (
     output [26:0] o_norm_y,
     output [26:0] o_norm_z
 );
-    // 4 + 5 = 9 cycles to complete
     wire [26:0] dot, inv_sqrt;
+
+    reg [26:0]
+        point_x_pipe[PIPELINE_STAGES:0],
+        point_y_pipe[PIPELINE_STAGES:0],
+        point_z_pipe[PIPELINE_STAGES:0];
+
     VEC_dot sqr_dot (
         .i_clk(i_clk),
         .i_a_x(i_x),
@@ -215,20 +201,35 @@ module VEC_normalize (
         .oInvSqrt(inv_sqrt)
     );
     FpMul x_scale_mul (
-        .iA(i_x),
+        .iA(point_x_pipe[PIPELINE_STAGES]),
         .iB(inv_sqrt),
         .oProd(o_norm_x)
     );
     FpMul y_scale_mul (
-        .iA(i_y),
+        .iA(point_y_pipe[PIPELINE_STAGES]),
         .iB(inv_sqrt),
         .oProd(o_norm_y)
     );
     FpMul z_scale_mul (
-        .iA(i_z),
+        .iA(point_z_pipe[PIPELINE_STAGES]),
         .iB(inv_sqrt),
         .oProd(o_norm_z)
     );
+    genvar i;
+    generate
+        for (i = 0; i < PIPELINE_STAGES; i = i + 1) begin : g_ray_pipeline
+            always @(posedge i_clk) begin
+                /* verilator lint_off BLKSEQ*/
+                point_x_pipe[0] = i_x;
+                point_y_pipe[0] = i_y;
+                point_z_pipe[0] = i_z;
+                /* verilator lint_on BLKSEQ */
+                point_x_pipe[i+1] <= point_x_pipe[i];
+                point_y_pipe[i+1] <= point_y_pipe[i];
+                point_z_pipe[i+1] <= point_z_pipe[i];
+            end
+        end
+    endgenerate
 endmodule
 
 module VEC_3x3_mult (
@@ -281,82 +282,5 @@ module VEC_3x3_mult (
     );
 endmodule
 
-// uh oh
-module VEC_4x4_mult (
-    input i_clk,
-    input [26:0] i_m_1_1,
-    input [26:0] i_m_1_2,
-    input [26:0] i_m_1_3,
-    input [26:0] i_m_1_4,
-    input [26:0] i_m_2_1,
-    input [26:0] i_m_2_2,
-    input [26:0] i_m_2_3,
-    input [26:0] i_m_2_4,
-    input [26:0] i_m_3_1,
-    input [26:0] i_m_3_2,
-    input [26:0] i_m_3_3,
-    input [26:0] i_m_3_4,
-    input [26:0] i_m_4_1,
-    input [26:0] i_m_4_2,
-    input [26:0] i_m_4_3,
-    input [26:0] i_m_4_4,
-    input [26:0] i_x,
-    input [26:0] i_y,
-    input [26:0] i_z,
-    input [26:0] i_w,
-    output [26:0] o_x,
-    output [26:0] o_y,
-    output [26:0] o_z
-);
-
-    VEC_dot_4 x (
-        .i_clk(i_clk),
-        .i_a_x(i_m_1_1),
-        .i_a_y(i_m_1_2),
-        .i_a_z(i_m_1_3),
-        .i_a_w(i_m_1_4),
-        .i_b_x(i_x),
-        .i_b_y(i_y),
-        .i_b_z(i_z),
-        .i_b_w(i_w),
-        .o_dot(o_x)
-    );
-    VEC_dot_4 y (
-        .i_clk(i_clk),
-        .i_a_x(i_m_2_1),
-        .i_a_y(i_m_2_2),
-        .i_a_z(i_m_2_3),
-        .i_a_w(i_m_2_4),
-        .i_b_x(i_x),
-        .i_b_y(i_y),
-        .i_b_z(i_z),
-        .i_b_w(i_w),
-        .o_dot(o_y)
-    );
-    VEC_dot_4 z (
-        .i_clk(i_clk),
-        .i_a_x(i_m_3_1),
-        .i_a_y(i_m_3_2),
-        .i_a_z(i_m_3_3),
-        .i_a_w(i_m_3_4),
-        .i_b_x(i_x),
-        .i_b_y(i_y),
-        .i_b_z(i_z),
-        .i_b_w(i_w),
-        .o_dot(o_z)
-    );
-    VEC_dot_4 w (
-        .i_clk(i_clk),
-        .i_a_x(i_m_4_1),
-        .i_a_y(i_m_4_2),
-        .i_a_z(i_m_4_3),
-        .i_a_w(i_m_4_4),
-        .i_b_x(i_x),
-        .i_b_y(i_y),
-        .i_b_z(i_z),
-        .i_b_w(i_w),
-        .o_dot(o_w)
-    );
-
-endmodule
-/* verilator lint_on UNUSEDSIGNAL */  /* verilator lint_on DECLFILENAME */
+/* verilator lint_on UNUSEDSIGNAL */
+/* verilator lint_on DECLFILENAME */
