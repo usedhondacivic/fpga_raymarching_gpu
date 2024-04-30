@@ -376,7 +376,9 @@ rayInfo raymarch() {
     return rayInfo(vec3(0.0, 1.0, 0.0));
 }
 */
-module raymarcher (
+module raymarcher #(
+    parameter PIPELINE_OFFSET = 60
+) (
     input                   clk,
     input  reg [`CORDW-1:0] pixel_x,      // horizontal SDL position
     input  reg [`CORDW-1:0] pixel_y,      // vertical SDL position
@@ -396,10 +398,21 @@ module raymarcher (
     output     [       7:0] green,
     output     [       7:0] blue
 );
+    wire [`CORDW-1:0] pixel_pipeline_adj_x;
+    assign pixel_pipeline_adj_x =
+		pixel_x > `SCREEN_WIDTH ? `SCREEN_WIDTH :
+		pixel_x + PIPELINE_OFFSET > `SCREEN_WIDTH ? PIPELINE_OFFSET - pixel_x :
+		pixel_x + PIPELINE_OFFSET;
+
+    wire [`CORDW-1:0] pixel_pipeline_adj_y;
+    assign pixel_pipeline_adj_y =
+		pixel_y > `SCREEN_HEIGHT ? `SCREEN_HEIGHT :
+		pixel_x + PIPELINE_OFFSET > `SCREEN_WIDTH ? pixel_y + 1 :
+		pixel_y;
 
     wire [26:0] pixel_x_fp, pixel_y_fp;
     Int2Fp px_fp (
-        .iInteger({6'd0, pixel_x}),
+        .iInteger({6'd0, pixel_pipeline_adj_x}),
         .oA(pixel_x_fp)
     );
     Int2Fp py_fp (
@@ -410,8 +423,8 @@ module raymarcher (
     reg [26:0] frag_dir_x[`NUM_ITR:0], frag_dir_y[`NUM_ITR:0], frag_dir_z[`NUM_ITR:0];
     frag_to_world_vector F (
         .i_clk(clk),
-        .i_x(pixel_x),
-        .i_y(pixel_y),
+        .i_x(pixel_pipeline_adj_x),
+        .i_y(pixel_pipeline_adj_y),
         .look_at_1_1(look_at_1_1),
         .look_at_1_2(look_at_1_2),
         .look_at_1_3(look_at_1_3),
