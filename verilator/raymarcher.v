@@ -8,8 +8,8 @@
 `define NUM_ITR 20
 
 // `define EPSILON 27'h1ee6666 // 0.1
-// `define EPSILON 27'h1e11eb8 //0.01
-`define EPSILON 27'h1f26666 // 0.2
+`define EPSILON 27'h1e11eb8 //0.01
+// `define EPSILON 27'h1f26666 // 0.2
 
 `define MAX_DIST 27'h2180000
 
@@ -233,7 +233,7 @@ module sdf (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 10
+    parameter SDF_STAGES = 11
 ) (
     input clk,
     input [26:0] point_x,
