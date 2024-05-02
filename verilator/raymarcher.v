@@ -380,8 +380,8 @@ module raymarcher #(
     parameter PIPELINE_OFFSET = 60
 ) (
     input                   clk,
-    input  reg [`CORDW-1:0] pixel_x,      // horizontal SDL position
-    input  reg [`CORDW-1:0] pixel_y,      // vertical SDL position
+    input   	[`CORDW-1:0] pixel_x,      // horizontal SDL position
+    input  		[`CORDW-1:0] pixel_y,      // vertical SDL position
     input      [      26:0] look_at_1_1,  // Look at matrix, calculated on the HPS
     input      [      26:0] look_at_1_2,  // https://lygia.xyz/space/lookAt
     input      [      26:0] look_at_1_3,
