@@ -5,7 +5,7 @@
 `define SCREEN_WIDTH 640
 `define SCREEN_HEIGHT 480
 
-`define NUM_ITR 10
+`define NUM_ITR 6
 
 `define EPSILON 27'h1ee6666 // 0.1
 // `define EPSILON 27'h1e11eb8 //0.01
@@ -420,7 +420,7 @@ module raymarcher #(
         .oA(pixel_y_fp)
     );
 
-    reg [26:0] frag_dir_x[`NUM_ITR:0], frag_dir_y[`NUM_ITR:0], frag_dir_z[`NUM_ITR:0];
+    wire [26:0] frag_dir_x[`NUM_ITR:0], frag_dir_y[`NUM_ITR:0], frag_dir_z[`NUM_ITR:0];
     frag_to_world_vector F (
         .i_clk(clk),
         .i_x(pixel_pipeline_adj_x),

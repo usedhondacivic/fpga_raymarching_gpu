@@ -397,67 +397,113 @@ reg 		[9:0] 	y_coord ;
 wire 		[9:0]		next_x ;
 wire 		[9:0] 	next_y ;
 
-reg [7:0] red;
-reg [7:0] green;
-reg [7:0] blue;
+wire [7:0] red;
+wire [7:0] green;
+wire [7:0] blue;
 
-always@(posedge M10k_pll) begin
+// raymarcher RM (
+// 	.clk(clk_50),
+// 	.pixel_x(sx),
+// 	.pixel_y(sy),
+// 	.look_at_1_1(look_at_1_1),
+// 	.look_at_1_2(look_at_1_2),
+// 	.look_at_1_3(look_at_1_3),
+// 	.look_at_2_1(look_at_2_1),
+// 	.look_at_2_2(look_at_2_2),
+// 	.look_at_2_3(look_at_2_3),
+// 	.look_at_3_1(look_at_3_1),
+// 	.look_at_3_2(look_at_3_2),
+// 	.look_at_3_3(look_at_3_3),
+// 	.eye_x(eye_x),
+// 	.eye_y(eye_y),
+// 	.eye_z(eye_z),
+// 	.red(red),
+// 	.green(green),
+// 	.blue(blue)
+// );
+
+	wire [26:0] lookat_1_1_export, 
+				lookat_1_2_export,
+				lookat_1_3_export,
+				lookat_2_1_export, 
+				lookat_2_2_export,
+				lookat_2_3_export,
+				lookat_3_1_export, 
+				lookat_3_2_export,
+				lookat_3_3_export;
+	wire [26:0] eye_x_export, 
+				eye_y_export,
+				eye_z_export;
+
+ raymarcher RM (
+ 	.clk(vga_pll),
+ 	.pixel_x(next_x),
+ 	.pixel_y(next_y),
+ 	.look_at_1_1(lookat_1_1_export[26:0]),
+ 	.look_at_1_2(lookat_1_2_export[26:0]),
+ 	.look_at_1_3(lookat_1_3_export[26:0]),
+ 	.look_at_2_1(lookat_2_1_export[26:0]),
+ 	.look_at_2_2(lookat_2_2_export[26:0]),
+ 	.look_at_2_3(lookat_2_3_export[26:0]),
+ 	.look_at_3_1(lookat_3_1_export[26:0]),
+ 	.look_at_3_2(lookat_3_2_export[26:0]),
+ 	.look_at_3_3(lookat_3_3_export[26:0]),
+ 	.eye_x(eye_x_export[26:0]),
+ 	.eye_y(eye_y_export[26:0]),
+ 	.eye_z(eye_z_export[26:0]),
+ 	.red(red),
+ 	.green(green),
+ 	.blue(blue)
+ );
+ always@(posedge M10k_pll) begin
 	// Zero everything in reset
 	if (~KEY[0]) begin
 		arbiter_state <= 8'd_0 ;
-		vga_reset <= 1'b_1 ;
-		x_coord <= 10'd_0 ;
-		y_coord <= 10'd_0 ;
-	end
-	// Otherwiser repeatedly write a large checkerboard to memory
-	else begin
-		if (arbiter_state == 8'd_0) begin
-			vga_reset <= 1'b_0 ;
-			// write_enable <= 1'b_1 ;
-			// write_address <= (19'd_640 * y_coord) + x_coord ;
-			if (x_coord < 10'd_320) begin
-				if (y_coord < 10'd_240) begin
-					// write_data <= 8'b_111_000_00 ;
-					red <= 8'b_11111111;
-					green <= 8'd0;
-					blue <= 8'd0;
-				end
-				else begin
-					red <= 8'd0;
-					green <= 8'b_11111111;
-					blue <= 8'd0;
-					// write_data <= 8'b_000_111_00 ;
-				end
-			end
-			else begin
-				if (y_coord < 10'd_240) begin
-					red <= 8'd0;
-					green <= 8'd0;
-					blue <= 8'b_11111111;
-					// write_data <= 8'b_000_000_11 ;
-				end
-				else begin
-					red <= 8'b_11111111;
-					green <= 8'b_11111111;
-					blue <= 8'd0;
-					// write_data <= 8'b_111_111_00 ;
-				end
-			end
-			// x_coord <= (x_coord==10'd_639)?10'd_0:(x_coord + 10'd_1) ;
-			// y_coord <= (x_coord==10'd_639)?((y_coord==10'd_479)?10'd_0:(y_coord+10'd_1)):y_coord ;
-			arbiter_state <= 8'd_0 ;
-		end
+		vga_reset <= 1'b_1;
+	end else begin
+		vga_reset <= 1'b_0;
 	end
 end
 
-// Instantiate memory
-// M10K_1000_8 pixel_data( .q(M10k_out), // contains pixel color (8 bit) for display
-// 								.d(write_data),
-// 								.write_address(write_address),
-// 								.read_address((19'd_640*next_y) + next_x),
-// 								.we(write_enable),
-// 								.clk(M10k_pll)
-// );
+//always@(posedge M10k_pll) begin
+//	// Zero everything in reset
+//	if (~KEY[0]) begin
+//		arbiter_state <= 8'd_0 ;
+//		vga_reset <= 1'b_1 ;
+//		x_coord <= 10'd_0 ;
+//		y_coord <= 10'd_0 ;
+//	end
+//	else begin
+//		if (arbiter_state == 8'd_0) begin
+//			vga_reset <= 1'b_0 ;
+//			if (next_x < 10'd_320) begin
+//				if (next_y < 10'd_240) begin
+//					red <= 8'b_11111111;
+//					green <= 8'd0;
+//					blue <= 8'd0;
+//				end
+//				else begin
+//					red <= 8'd0;
+//					green <= 8'b_11111111;
+//					blue <= 8'd0;
+//				end
+//			end
+//			else begin
+//				if (next_y < 10'd_240) begin
+//					red <= 8'd0;
+//					green <= 8'd0;
+//					blue <= 8'b_11111111;
+//				end
+//				else begin
+//					red <= 8'b_11111111;
+//					green <= 8'b_11111111;
+//					blue <= 8'd0;
+//				end
+//			end
+//			arbiter_state <= 8'd_0 ;
+//		end
+//	end
+//end
 
 // Instantiate VGA driver					
 vga_driver DUT   (	.clock(vga_pll), 
@@ -600,7 +646,22 @@ Computer_System The_System (
 	.hps_io_hps_io_usb1_inst_CLK		(HPS_USB_CLKOUT),
 	.hps_io_hps_io_usb1_inst_STP		(HPS_USB_STP),
 	.hps_io_hps_io_usb1_inst_DIR		(HPS_USB_DIR),
-	.hps_io_hps_io_usb1_inst_NXT		(HPS_USB_NXT)
+	.hps_io_hps_io_usb1_inst_NXT		(HPS_USB_NXT),
+	
+	// PIO
+	.lookat_1_1_export(lookat_1_1_export),
+	.lookat_1_2_export(lookat_1_2_export),
+	.lookat_1_3_export(lookat_1_3_export),
+	.lookat_2_1_export(lookat_2_1_export),
+	.lookat_2_2_export(lookat_2_2_export),
+	.lookat_2_3_export(lookat_2_3_export),
+	.lookat_3_1_export(lookat_3_1_export),
+	.lookat_3_2_export(lookat_3_2_export),
+	.lookat_3_3_export(lookat_3_3_export),
+	
+	.eye_x_export(eye_x_export),
+	.eye_y_export(eye_y_export),
+	.eye_z_export(eye_z_export)
 );
 endmodule // end top level
 
@@ -787,8 +848,10 @@ module vga_driver (
 	assign sync = 1'b_0 ;
 	assign blank = hysnc_reg & vsync_reg ;
 	// The x/y coordinates that should be available on the NEXT cycle
-	assign next_x = (h_state==H_ACTIVE_STATE)?h_counter:10'd_0 ;
-	assign next_y = (v_state==V_ACTIVE_STATE)?v_counter:10'd_0 ;
+	// assign next_x = (h_state==H_ACTIVE_STATE)?h_counter:10'd_0 ;
+	// assign next_y = (v_state==V_ACTIVE_STATE)?v_counter:10'd_0 ;
+	assign next_x = h_counter;
+	assign next_y = v_counter;
 
 endmodule
 

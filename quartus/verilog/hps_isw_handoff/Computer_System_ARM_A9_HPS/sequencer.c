@@ -3838,7 +3838,21 @@ alt_u32 rw_mgr_mem_calibrate_read_test (alt_u32 rank_bgn, alt_u32 group, alt_u32
 
 static inline alt_u32 rw_mgr_mem_calibrate_read_test_all_ranks (alt_u32 group, alt_u32 num_tries, alt_u32 all_correct, t_btfld *bit_chk, alt_u32 all_groups)
 {
-	return rw_mgr_mem_calibrate_read_test (0, group, num_tries, all_correct, bit_chk, all_groups, 1);
+    alt_u32 success = 1;
+    alt_u32 one_test_success;
+    alt_u32 i = 0;
+    if (num_tries <= 0) num_tries = 1;
+    for (i = 0; i < num_tries; i++)
+    {
+        one_test_success = rw_mgr_mem_calibrate_read_test (0, group, 1, all_correct, bit_chk, all_groups, 1);
+        success = success & one_test_success;
+        if (success == 0)
+        {
+            break;
+        }
+    }
+    
+    return success;
 }
 
 #if ENABLE_DELAY_CHAIN_WRITE
@@ -4028,7 +4042,7 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 	
 alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 {
-	alt_u32 i, d, v, p, sr;
+	alt_u32 i, d, v, p, sr, j;
 	alt_u32 max_working_cnt;
 	alt_u32 fail_cnt;
 	t_btfld bit_chk;
@@ -4054,7 +4068,11 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 	reg_file_set_sub_stage(CAL_SUBSTAGE_VFIFO_CENTER);
 	
 	scc_mgr_set_dqs_en_delay_all_ranks(grp, 0);
+#if SKIP_PTAP_0_DQS_EN_CAL
+        scc_mgr_set_dqs_en_phase_all_ranks(grp, 1);
+#else
 	scc_mgr_set_dqs_en_phase_all_ranks(grp, 0);
+#endif
 
 	fail_cnt = 0;
 	
@@ -4085,7 +4103,7 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 				DPRINT(2, "find_dqs_en_phase: begin: vfifo=%lu ptap=%lu dtap=%lu", BFM_GBL_GET(vfifo_idx), p, d);
 				scc_mgr_set_dqs_en_phase_all_ranks(grp, p);
 
-				test_status = rw_mgr_mem_calibrate_read_test_all_ranks (grp, 1, PASS_ONE_BIT, &bit_chk, 0);
+				test_status = rw_mgr_mem_calibrate_read_test_all_ranks (grp, 5, PASS_ONE_BIT, &bit_chk, 0);
 
 				//if (p ==0 && d == 0)
 				sample_di_data(bit_chk, work_bgn, d, i, p);
@@ -4103,7 +4121,7 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 	//USER * Step 1 : First push vfifo until we get a failing read *
 	for (v = 0; v < VFIFO_SIZE; ) {
 		DPRINT(2, "find_dqs_en_phase: vfifo %lu", BFM_GBL_GET(vfifo_idx));
-		test_status = rw_mgr_mem_calibrate_read_test_all_ranks (grp, 1, PASS_ONE_BIT, &bit_chk, 0);
+		test_status = rw_mgr_mem_calibrate_read_test_all_ranks (grp, 5, PASS_ONE_BIT, &bit_chk, 0);
 		if (!test_status) {
 			fail_cnt++;
 
@@ -4134,10 +4152,16 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 				
 		for (i = 0; i < VFIFO_SIZE; i++) {
 			for (p = 0; p <= IO_DQS_EN_PHASE_MAX; p++, work_bgn += IO_DELAY_PER_OPA_TAP) {
+#if SKIP_PTAP_0_DQS_EN_CAL
+				// Skip p == 0 setting for HARD PHY
+				if (p == 0) {
+					continue;
+				}
+#endif				
 				DPRINT(2, "find_dqs_en_phase: begin: vfifo=%lu ptap=%lu dtap=%lu", BFM_GBL_GET(vfifo_idx), p, d);
 				scc_mgr_set_dqs_en_phase_all_ranks(grp, p);
 
-				test_status = rw_mgr_mem_calibrate_read_test_all_ranks (grp, 1, PASS_ONE_BIT, &bit_chk, 0);
+				test_status = rw_mgr_mem_calibrate_read_test_all_ranks (grp, 5, PASS_ONE_BIT, &bit_chk, 0);
 
 				if (test_status) {
 					max_working_cnt = 1;
@@ -4184,6 +4208,14 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 			p = p - 1;
 		}
 		tmp_delay = work_bgn - IO_DELAY_PER_OPA_TAP;
+		
+		// For HARD EMIF we increase the phase if p == 0 as we can't set that value
+#if SKIP_PTAP_0_DQS_EN_CAL	
+		if (p == 0) {
+			p = 1;
+			tmp_delay = work_bgn;
+		}
+#endif
 		scc_mgr_set_dqs_en_phase_all_ranks(grp, p);
 			
 		found_begin = 0;
@@ -4193,7 +4225,7 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 			
 			scc_mgr_set_dqs_en_delay_all_ranks(grp, d);
 				
-			if (rw_mgr_mem_calibrate_read_test_all_ranks (grp, 1, PASS_ONE_BIT, &bit_chk, 0)) {
+			if (rw_mgr_mem_calibrate_read_test_all_ranks (grp, 5, PASS_ONE_BIT, &bit_chk, 0)) {
 				found_begin = 1;
 				work_bgn = tmp_delay;
 				break;
@@ -4211,7 +4243,11 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 				d2 = d;
 			} else if (p == IO_DQS_EN_PHASE_MAX) {
 				v2 = (BFM_GBL_GET(vfifo_idx) + 1) % VFIFO_SIZE;
+#if SKIP_PTAP_0_DQS_EN_CAL
+				p2 = 1;
+#else
 				p2 = 0;
+#endif
 				d2 = 0;
 			} else {
 				v2 = BFM_GBL_GET(vfifo_idx);
@@ -4290,14 +4326,32 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 			p = 0;
 			rw_mgr_incr_vfifo(grp, &v);
 		}
+
+		j = 0;
 		
 		found_end = 0;
 		for (; i < VFIFO_SIZE + 1; i++) {
 			for (; p <= IO_DQS_EN_PHASE_MAX; p++, work_end += IO_DELAY_PER_OPA_TAP) {
 				DPRINT(2, "find_dqs_en_phase: end: vfifo=%lu ptap=%lu dtap=%lu", BFM_GBL_GET(vfifo_idx), p, (long unsigned int)0);
+				j++;
+#if SKIP_PTAP_0_DQS_EN_CAL
+				if ( p == 0 ) {
+					max_working_cnt++;
+					continue;
+				}
+#endif
 				scc_mgr_set_dqs_en_phase_all_ranks(grp, p);
+
+				test_status = rw_mgr_mem_calibrate_read_test_all_ranks (grp, 5, PASS_ONE_BIT, &bit_chk, 0);
 				
-				if (!rw_mgr_mem_calibrate_read_test_all_ranks (grp, 1, PASS_ONE_BIT, &bit_chk, 0)) {
+				// Check if the first edge we try fails
+				// This indicates that the begin edge that we found was fuzzy, so we adjust the begin edge
+				if (!test_status && (j == 1))
+				{
+					work_bgn = work_end;
+				}
+				else if (!test_status)
+				{
 					found_end = 1;
 					break;
 				} else {
@@ -4326,6 +4380,13 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 		//USER * step 5a:  back off one from last, increment in dtaps  *
 			
 		//USER Special case code for backing up a phase 
+#if SKIP_PTAP_0_DQS_EN_CAL	
+		if (p == 1) {
+			p = 0;
+			work_end -= IO_DELAY_PER_OPA_TAP;
+			max_working_cnt--;
+		}
+#endif
 		if (p == 0) {
 			p = IO_DQS_EN_PHASE_MAX;
 			rw_mgr_decr_vfifo(grp, &v);
@@ -4341,6 +4402,8 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 	
 		DPRINT(2, "find_dqs_en_phase: found end v/p: vfifo=%lu ptap=%lu", BFM_GBL_GET(vfifo_idx), p);
 	} else {
+	
+		// We should not be hitting this case as the window should be around one clock cycle wide
 
 		//USER ********************************************************************
 		//USER * step 3-5b:  Find the right edge of the window using delay taps   *		
@@ -4367,7 +4430,7 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 			DPRINT(2, "find_dqs_en_phase: end-2: dtap=%lu", d);
 			scc_mgr_set_dqs_en_delay_all_ranks(grp, d);
 
-			if (!rw_mgr_mem_calibrate_read_test_all_ranks (grp, 1, PASS_ONE_BIT, &bit_chk, 0)) {
+			if (!rw_mgr_mem_calibrate_read_test_all_ranks (grp, 5, PASS_ONE_BIT, &bit_chk, 0)) {
 				break;
 			}
 		}
@@ -4416,7 +4479,12 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 	DPRINT(2, "find_dqs_en_phase: calculate dtaps_per_ptap for tracking");
 	
 	//USER Special case code for backing up a phase 
+	
+#if SKIP_PTAP_0_DQS_EN_CAL	
+	if (p == 0 || p == 1) {
+#else
 	if (p == 0) {
+#endif
 		p = IO_DQS_EN_PHASE_MAX;
 		rw_mgr_decr_vfifo(grp, &v);
 		DPRINT(2, "find_dqs_en_phase: backed up cycle/phase: v=%lu p=%lu", BFM_GBL_GET(vfifo_idx), p);
@@ -4501,7 +4569,13 @@ alt_u32 rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase (alt_u32 grp)
 	for(sr = 0; sr < NUM_SHADOW_REGS; sr++) {
 		TCLRPT_SET(debug_cal_report->cal_dqs_in_margins[sr][grp].dqsen_margin, max_working_cnt -1);
 	}
-
+#if SKIP_PTAP_0_DQS_EN_CAL	
+		if (p == 1) {
+			// If center lies at p=0 and d=d, then the safest choice is to set the center at p=1 and d=0
+			p = 2;
+			d = 0;
+		}
+#endif
 	scc_mgr_set_dqs_en_phase_all_ranks(grp, p-1);
 	scc_mgr_set_dqs_en_delay_all_ranks(grp, d);
 	
@@ -5767,6 +5841,10 @@ alt_u32 rw_mgr_mem_calibrate_vfifo (alt_u32 read_group, alt_u32 test_bgn)
 #endif
 #endif
 
+#if ARRIAV || CYCLONEV
+			///////
+			// To make DQS bypass able to calibrate more often
+			///////
 			// Loop over different DQS in delay chains for the purpose of DQS Enable calibration finding one bit working
 			orig_start_dqs = READ_SCC_DQS_IN_DELAY(read_group);	
 			for (dqs_in_dtaps = orig_start_dqs; dqs_in_dtaps <= IO_DQS_IN_DELAY_MAX && grp_calibrated == 0; dqs_in_dtaps++) {
@@ -5783,6 +5861,7 @@ alt_u32 rw_mgr_mem_calibrate_vfifo (alt_u32 read_group, alt_u32 test_bgn)
 						IOWR_32DIRECT (SCC_MGR_UPD, 0, 0);
 					}
 				}
+#endif				
 				
 // case:56390
 #if 0 && ARRIAV && QDRII
@@ -5810,10 +5889,15 @@ alt_u32 rw_mgr_mem_calibrate_vfifo (alt_u32 read_group, alt_u32 test_bgn)
 						}
 						if (rw_mgr_mem_calibrate_vfifo_find_dqs_en_phase_sweep_dq_in_delay (write_group, read_group, test_bgn)) {
 						
+#if ARRIAV || CYCLONEV						
+							///////
+							// To make DQS bypass able to calibrate more often
+							///////
 							// Before doing read deskew, set DQS in back to the reserve value
 							WRITE_SCC_DQS_IN_DELAY(read_group, orig_start_dqs);
 							scc_mgr_load_dqs (read_group);
 							IOWR_32DIRECT (SCC_MGR_UPD, 0, 0);						
+#endif
 						
 							if (! rw_mgr_mem_calibrate_vfifo_center (0, write_group, read_group, test_bgn, 1)) {
 								// remember last failed stage
@@ -5847,10 +5931,15 @@ alt_u32 rw_mgr_mem_calibrate_vfifo (alt_u32 read_group, alt_u32 test_bgn)
 							//USER Select shadow register set
 							select_shadow_regs_for_update(rank_bgn, read_group, 1);
 							
+#if ARRIAV || CYCLONEV
+							///////
+							// To make DQS bypass able to calibrate more often
+							///////
 							// Before doing read deskew, set DQS in back to the reserve value
 							WRITE_SCC_DQS_IN_DELAY(read_group, orig_start_dqs);
 							scc_mgr_load_dqs (read_group);
 							IOWR_32DIRECT (SCC_MGR_UPD, 0, 0);
+#endif
 					
 							// If doing read after write calibration, do not update FOM now - do it then
 #if READ_AFTER_WRITE_CALIBRATION
@@ -5889,7 +5978,12 @@ alt_u32 rw_mgr_mem_calibrate_vfifo (alt_u32 read_group, alt_u32 test_bgn)
 				}
 
 #endif
+#if ARRIAV || CYCLONEV
+			///////
+			// To make DQS bypass able to calibrate more often
+			///////
 			}
+#endif			
 		
 		}
 #if BFM_MODE
@@ -6085,6 +6179,15 @@ alt_u32 rw_mgr_mem_calibrate_lfifo (void)
 	//USER reset the fifos to get pointers to known state 
 
 	IOWR_32DIRECT (PHY_MGR_CMD_FIFO_RESET, 0, 0);
+   
+#if SET_FIX_READ_LATENCY_ENABLE      	 
+   if(gbl->curr_read_lat < (FIX_READ_LATENCY -1) ) {
+      gbl->curr_read_lat = FIX_READ_LATENCY -2;  	
+   } else {
+     //Mark as fail by changing found_one back to 0
+      found_one = 0 ;
+   }
+#endif 
 
 	if (found_one) {
 		//USER add a fudge factor to the read latency that was determined 

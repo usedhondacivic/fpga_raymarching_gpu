@@ -56,6 +56,17 @@ module Computer_System (
 	hps_io_hps_io_gpio_inst_GPIO53,
 	hps_io_hps_io_gpio_inst_GPIO54,
 	hps_io_hps_io_gpio_inst_GPIO61,
+	lookat_1_1_export,
+	lookat_1_2_export,
+	lookat_1_3_export,
+	lookat_2_1_export,
+	lookat_2_2_export,
+	lookat_2_3_export,
+	lookat_3_1_export,
+	lookat_3_2_export,
+	lookat_3_3_export,
+	m10k_pll_locked_export,
+	m10k_pll_outclk0_clk,
 	memory_mem_a,
 	memory_mem_ba,
 	memory_mem_ck,
@@ -76,8 +87,9 @@ module Computer_System (
 	system_pll_ref_reset_reset,
 	vga_pio_locked_export,
 	vga_pio_outclk0_clk,
-	m10k_pll_outclk0_clk,
-	m10k_pll_locked_export);	
+	eye_x_export,
+	eye_y_export,
+	eye_z_export);	
 
 	output		hps_io_hps_io_emac1_inst_TX_CLK;
 	output		hps_io_hps_io_emac1_inst_TXD0;
@@ -135,6 +147,17 @@ module Computer_System (
 	inout		hps_io_hps_io_gpio_inst_GPIO53;
 	inout		hps_io_hps_io_gpio_inst_GPIO54;
 	inout		hps_io_hps_io_gpio_inst_GPIO61;
+	output	[31:0]	lookat_1_1_export;
+	output	[31:0]	lookat_1_2_export;
+	output	[31:0]	lookat_1_3_export;
+	output	[31:0]	lookat_2_1_export;
+	output	[31:0]	lookat_2_2_export;
+	output	[31:0]	lookat_2_3_export;
+	output	[31:0]	lookat_3_1_export;
+	output	[31:0]	lookat_3_2_export;
+	output	[31:0]	lookat_3_3_export;
+	output		m10k_pll_locked_export;
+	output		m10k_pll_outclk0_clk;
 	output	[14:0]	memory_mem_a;
 	output	[2:0]	memory_mem_ba;
 	output		memory_mem_ck;
@@ -155,6 +178,7 @@ module Computer_System (
 	input		system_pll_ref_reset_reset;
 	output		vga_pio_locked_export;
 	output		vga_pio_outclk0_clk;
-	output		m10k_pll_outclk0_clk;
-	output		m10k_pll_locked_export;
+	output	[31:0]	eye_x_export;
+	output	[31:0]	eye_y_export;
+	output	[31:0]	eye_z_export;
 endmodule

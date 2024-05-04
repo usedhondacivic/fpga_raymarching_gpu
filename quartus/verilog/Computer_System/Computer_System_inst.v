@@ -55,6 +55,17 @@
 		.hps_io_hps_io_gpio_inst_GPIO53  (<connected-to-hps_io_hps_io_gpio_inst_GPIO53>),  //                     .hps_io_gpio_inst_GPIO53
 		.hps_io_hps_io_gpio_inst_GPIO54  (<connected-to-hps_io_hps_io_gpio_inst_GPIO54>),  //                     .hps_io_gpio_inst_GPIO54
 		.hps_io_hps_io_gpio_inst_GPIO61  (<connected-to-hps_io_hps_io_gpio_inst_GPIO61>),  //                     .hps_io_gpio_inst_GPIO61
+		.lookat_1_1_export               (<connected-to-lookat_1_1_export>),               //           lookat_1_1.export
+		.lookat_1_2_export               (<connected-to-lookat_1_2_export>),               //           lookat_1_2.export
+		.lookat_1_3_export               (<connected-to-lookat_1_3_export>),               //           lookat_1_3.export
+		.lookat_2_1_export               (<connected-to-lookat_2_1_export>),               //           lookat_2_1.export
+		.lookat_2_2_export               (<connected-to-lookat_2_2_export>),               //           lookat_2_2.export
+		.lookat_2_3_export               (<connected-to-lookat_2_3_export>),               //           lookat_2_3.export
+		.lookat_3_1_export               (<connected-to-lookat_3_1_export>),               //           lookat_3_1.export
+		.lookat_3_2_export               (<connected-to-lookat_3_2_export>),               //           lookat_3_2.export
+		.lookat_3_3_export               (<connected-to-lookat_3_3_export>),               //           lookat_3_3.export
+		.m10k_pll_locked_export          (<connected-to-m10k_pll_locked_export>),          //      m10k_pll_locked.export
+		.m10k_pll_outclk0_clk            (<connected-to-m10k_pll_outclk0_clk>),            //     m10k_pll_outclk0.clk
 		.memory_mem_a                    (<connected-to-memory_mem_a>),                    //               memory.mem_a
 		.memory_mem_ba                   (<connected-to-memory_mem_ba>),                   //                     .mem_ba
 		.memory_mem_ck                   (<connected-to-memory_mem_ck>),                   //                     .mem_ck
@@ -75,7 +86,8 @@
 		.system_pll_ref_reset_reset      (<connected-to-system_pll_ref_reset_reset>),      // system_pll_ref_reset.reset
 		.vga_pio_locked_export           (<connected-to-vga_pio_locked_export>),           //       vga_pio_locked.export
 		.vga_pio_outclk0_clk             (<connected-to-vga_pio_outclk0_clk>),             //      vga_pio_outclk0.clk
-		.m10k_pll_outclk0_clk            (<connected-to-m10k_pll_outclk0_clk>),            //     m10k_pll_outclk0.clk
-		.m10k_pll_locked_export          (<connected-to-m10k_pll_locked_export>)           //      m10k_pll_locked.export
+		.eye_x_export                    (<connected-to-eye_x_export>),                    //                eye_x.export
+		.eye_y_export                    (<connected-to-eye_y_export>),                    //                eye_y.export
+		.eye_z_export                    (<connected-to-eye_z_export>)                     //                eye_z.export
 	);
 
