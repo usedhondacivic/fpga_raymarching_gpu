@@ -413,6 +413,11 @@ module raymarcher (
 
     reg [26:0]
         frag_dir_x[`ITR_PER_LOOP:0], frag_dir_y[`ITR_PER_LOOP:0], frag_dir_z[`ITR_PER_LOOP:0];
+		  
+	wire [26:0]
+        new_frag_dir_x,
+        new_frag_dir_y,
+        new_frag_dir_z;
 
     frag_to_world_vector F (
         .i_clk(clk),
@@ -427,9 +432,9 @@ module raymarcher (
         .look_at_3_1(look_at_3_1),
         .look_at_3_2(look_at_3_2),
         .look_at_3_3(look_at_3_3),
-        .o_x(frag_dir_x[0]),
-        .o_y(frag_dir_y[0]),
-        .o_z(frag_dir_z[0])
+        .o_x(new_frag_dir_x),
+        .o_y(new_frag_dir_y),
+        .o_z(new_frag_dir_z)
     );
 
     reg [26:0] depth[`ITR_PER_LOOP:0];
@@ -461,6 +466,9 @@ module raymarcher (
             point_z[0] <= eye_z;
             pixel_x[0] <= x;
             pixel_y[0] <= y;
+            frag_dir_x[0] <= new_frag_dir_x;
+            frag_dir_y[0] <= new_frag_dir_y;
+            frag_dir_z[0] <= new_frag_dir_z;
 
             // Bump next pixel location
             x <= x == `SCREEN_WIDTH ? 0 : x + 1;
@@ -470,9 +478,6 @@ module raymarcher (
             write_pixel_x <= pixel_x[`ITR_PER_LOOP];
             write_pixel_y <= pixel_y[`ITR_PER_LOOP];
             write_color <= color_output;
-            // o_red <= red;
-            // o_green <= green;
-            // o_blue <= blue;
         end else begin
             // Pixel is not done being solved, keep trying
             hit[0] <= hit[`ITR_PER_LOOP];

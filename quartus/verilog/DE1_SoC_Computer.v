@@ -422,23 +422,23 @@ wire [7:0] blue;
 // 	.blue(blue)
 // );
 
-	wire [26:0] lookat_1_1_export, 
-				lookat_1_2_export,
-				lookat_1_3_export,
-				lookat_2_1_export, 
-				lookat_2_2_export,
-				lookat_2_3_export,
-				lookat_3_1_export, 
-				lookat_3_2_export,
-				lookat_3_3_export;
-	wire [26:0] eye_x_export, 
-				eye_y_export,
-				eye_z_export;
+wire [26:0] lookat_1_1_export, 
+			lookat_1_2_export,
+			lookat_1_3_export,
+			lookat_2_1_export, 
+			lookat_2_2_export,
+			lookat_2_3_export,
+			lookat_3_1_export, 
+			lookat_3_2_export,
+			lookat_3_3_export;
+wire [26:0] eye_x_export, 
+			eye_y_export,
+			eye_z_export;
+
+wire [7:0] out_color;
 
  raymarcher RM (
- 	.clk(vga_pll),
- 	.pixel_x(next_x),
- 	.pixel_y(next_y),
+ 	.clk(CLOCK_50),
  	.look_at_1_1(lookat_1_1_export[26:0]),
  	.look_at_1_2(lookat_1_2_export[26:0]),
  	.look_at_1_3(lookat_1_3_export[26:0]),
@@ -451,10 +451,15 @@ wire [7:0] blue;
  	.eye_x(eye_x_export[26:0]),
  	.eye_y(eye_y_export[26:0]),
  	.eye_z(eye_z_export[26:0]),
- 	.red(red),
- 	.green(green),
- 	.blue(blue)
+	.read_pixel_x(next_x),
+	.read_pixel_y(next_y),
+	.o_color(out_color)
  );
+
+assign red = {out_color[7:5], 5'd0};
+assign green = {out_color[4:2], 5'd0};
+assign blue = {out_color[1:0], 6'd0};
+
  always@(posedge M10k_pll) begin
 	// Zero everything in reset
 	if (~KEY[0]) begin
@@ -848,10 +853,10 @@ module vga_driver (
 	assign sync = 1'b_0 ;
 	assign blank = hysnc_reg & vsync_reg ;
 	// The x/y coordinates that should be available on the NEXT cycle
-	// assign next_x = (h_state==H_ACTIVE_STATE)?h_counter:10'd_0 ;
-	// assign next_y = (v_state==V_ACTIVE_STATE)?v_counter:10'd_0 ;
-	assign next_x = h_counter;
-	assign next_y = v_counter;
+	assign next_x = (h_state==H_ACTIVE_STATE)?h_counter:10'd_0 ;
+	assign next_y = (v_state==V_ACTIVE_STATE)?v_counter:10'd_0 ;
+	// assign next_x = h_counter;
+	// assign next_y = v_counter;
 
 endmodule
 

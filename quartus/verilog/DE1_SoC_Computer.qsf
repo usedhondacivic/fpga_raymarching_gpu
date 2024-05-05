@@ -967,7 +967,7 @@ set_global_assignment -name OPTIMIZATION_MODE BALANCED
 
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to *
 set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to *
-set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
+set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
 set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
 set_global_assignment -name FITTER_EFFORT "AUTO FIT"
 set_global_assignment -name VERILOG_FILE ../../verilator/vector_ops.v
