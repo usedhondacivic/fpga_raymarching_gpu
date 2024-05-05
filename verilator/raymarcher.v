@@ -8,8 +8,8 @@
 `define ITR_PER_LOOP 6
 `define NUM_LOOPS 3
 
-`define EPSILON 27'h1ee6666 // 0.1
-// `define EPSILON 27'h1e11eb8 //0.01
+// `define EPSILON 27'h1ee6666 // 0.1
+`define EPSILON 27'h1e11eb8 //0.01
 // `define EPSILON 27'h1f26666 // 0.2
 
 `define MAX_DIST 27'h2180000
@@ -24,10 +24,9 @@ module distance_to_color (
     input [26:0] distance,
     input [9:0] num_itr,
     input hit,
-    output [7:0] red,
-    output [7:0] green,
-    output [7:0] blue
+    output [7:0] o_color
 );
+    wire [7:0] red, green, blue;
     wire [26:0] distance_scaled;
     wire signed [15:0] distance_int;
     FpShift scale (
@@ -41,17 +40,18 @@ module distance_to_color (
     );
     wire [7:0] col;
     // assign green = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
-    assign blue  = hit ? 8'd255 : 8'd0;
+    assign blue = hit ? 8'd255 : 8'd0;
     // assign red   = 8'd255 - distance_int[7:0] + 8'd125;
     // assign col   = hit ? 8'd255 : 8'd0;
-    assign col   = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
+    assign col = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
     // assign col   = 8'd255 - distance_int[7:0] + 8'd125;
-    assign red   = col;
+    assign red = col;
     // assign green = hit ? 8'd255 - distance_int[8:1] + 8'd125 : 8'd0;
     // assign red   = hit ? 8'd255 : 8'd0;
     // assign green = hit ? 8'd255 : 8'd0;
     assign green = 0;
     // assign blue  = col;
+    assign o_color = {red[7:5], green[7:5], blue[7:6]};
 endmodule
 
 /*
@@ -388,13 +388,11 @@ rayInfo raymarch() {
     return rayInfo(vec3(0.0, 1.0, 0.0));
 }
 */
-module raymarcher #(
-    parameter PIPELINE_OFFSET = 60
-) (
+module raymarcher (
     input                   clk,
     input                   reset,
-    input      [      26:0] look_at_1_1,  // Look at matrix, calculated on the HPS
-    input      [      26:0] look_at_1_2,  // https://lygia.xyz/space/lookAt
+    input      [      26:0] look_at_1_1,   // Look at matrix, calculated on the HPS
+    input      [      26:0] look_at_1_2,   // https://lygia.xyz/space/lookAt
     input      [      26:0] look_at_1_3,
     input      [      26:0] look_at_2_1,
     input      [      26:0] look_at_2_2,
@@ -405,22 +403,13 @@ module raymarcher #(
     input      [      26:0] eye_x,
     input      [      26:0] eye_y,
     input      [      26:0] eye_z,
-    output reg [`CORDW-1:0] o_pixel_x,
-    output reg [`CORDW-1:0] o_pixel_y,
-    output reg [       7:0] o_red,
-    output reg [       7:0] o_green,
-    output reg [       7:0] o_blue
+    input      [`CORDW-1:0] read_pixel_x,
+    input      [`CORDW-1:0] read_pixel_y,
+    output reg [       7:0] o_color
 );
     reg [`CORDW-1:0] x, y;
-
-    wire [`CORDW-1:0] pixel_pipeline_adj_x;
-    assign pixel_pipeline_adj_x =
-		x + PIPELINE_OFFSET > `SCREEN_WIDTH ? PIPELINE_OFFSET - x
-										    : x + PIPELINE_OFFSET;
-
-    wire [`CORDW-1:0] pixel_pipeline_adj_y;
-    assign pixel_pipeline_adj_y = x + PIPELINE_OFFSET > `SCREEN_WIDTH ? y + 1 : y;
-
+    reg [`CORDW-1:0] write_pixel_x;
+    reg [`CORDW-1:0] write_pixel_y;
 
     reg [26:0]
         frag_dir_x[`ITR_PER_LOOP:0], frag_dir_y[`ITR_PER_LOOP:0], frag_dir_z[`ITR_PER_LOOP:0];
@@ -478,11 +467,12 @@ module raymarcher #(
             y <= x == `SCREEN_WIDTH ? (y == `SCREEN_HEIGHT ? 0 : y + 1) : y;
 
             // Update outputs
-            o_pixel_x <= pixel_x[`ITR_PER_LOOP];
-            o_pixel_y <= pixel_y[`ITR_PER_LOOP];
-            o_red <= red;
-            o_green <= green;
-            o_blue <= blue;
+            write_pixel_x <= pixel_x[`ITR_PER_LOOP];
+            write_pixel_y <= pixel_y[`ITR_PER_LOOP];
+            write_color <= color_output;
+            // o_red <= red;
+            // o_green <= green;
+            // o_blue <= blue;
         end else begin
             // Pixel is not done being solved, keep trying
             hit[0] <= hit[`ITR_PER_LOOP];
@@ -534,16 +524,45 @@ module raymarcher #(
         end
     endgenerate
 
-    wire [7:0] red, green, blue;
+    wire [7:0] color_output;
+    reg  [7:0] write_color;
     distance_to_color COLOR (
         .distance(depth[`ITR_PER_LOOP]),
         .num_itr(itr_before_hit[`ITR_PER_LOOP]),
         .hit(hit[`ITR_PER_LOOP]),
-        .red(red),
-        .green(green),
-        .blue(blue)
+        .o_color(color_output)
     );
 
+    M10K do_electric_sheep_dream_of_24_bit_color (
+        .q(o_color),
+        .d(write_color),
+        /* verilator lint_off WIDTHEXPAND */
+        .write_address(write_pixel_x + write_pixel_y * 640),
+        .read_address(read_pixel_x + read_pixel_y * 640),
+        /* verilator lint_on WIDTHEXPAND */
+        .we(1),
+        .clk(clk)
+    );
+
+endmodule
+
+module M10K (
+    output reg [7:0] q,
+    input [7:0] d,
+    input [18:0] write_address,
+    read_address,
+    input we,
+    clk
+);
+    // force M10K ram style
+    reg [7:0] mem[307200-1:0]  /* synthesis ramstyle = "no_rw_check, M10K" */;
+
+    always @(posedge clk) begin
+        if (we) begin
+            mem[write_address] <= d;
+        end
+        q <= mem[read_address];  // q doesn't get d in this clock cycle
+    end
 endmodule
 
 /* verilator lint_on UNUSEDSIGNAL */

@@ -2,27 +2,6 @@
 
 `define CORDW 10 // Coordinate width 2^10 = 1024
 
-/* verilator lint_off DECLFILENAME */
-module M10K (
-    output reg [23:0] q,
-    input [23:0] d,
-    input [18:0] write_address,
-    read_address,
-    input we,
-    clk
-);
-    // force M10K ram style
-    reg [23:0] mem[307200-1:0]  /* synthesis ramstyle = "no_rw_check, M10K" */;
-
-    always @(posedge clk) begin
-        if (we) begin
-            mem[write_address] <= d;
-        end
-        q <= mem[read_address];  // q doesn't get d in this clock cycle
-    end
-endmodule
-/* verilator lint_on DECLFILENAME */
-
 /* verilator lint_off UNUSEDSIGNAL */
 module top (
     /* VGA Simulation */
@@ -64,10 +43,7 @@ module top (
         .de
     );
 
-    wire [7:0] red;
-    wire [7:0] green;
-    wire [7:0] blue;
-    wire [`CORDW-1:0] x, y;
+    wire [7:0] output_color;
     raymarcher RM (
         .clk(clk_50),
         .reset(sim_rst),
@@ -83,32 +59,19 @@ module top (
         .eye_x(eye_x),
         .eye_y(eye_y),
         .eye_z(eye_z),
-        .o_pixel_x(x),
-        .o_pixel_y(y),
-        .o_red(red),
-        .o_green(green),
-        .o_blue(blue)
+        .read_pixel_x(sx),
+        .read_pixel_y(sy),
+        .o_color(output_color)
     );
-    wire [23:0] output_color;
 
-    M10K fake_vga_sdram (
-        .q(output_color),
-        .d({red, green, blue}),
-        /* verilator lint_off WIDTHEXPAND */
-        .write_address(x + y * 640),
-        .read_address(sx + sy * 640),
-        /* verilator lint_on WIDTHEXPAND */
-        .we(1),
-        .clk(clk_50)
-    );
 
     always @(posedge clk_pix) begin
         sdl_sx <= sx;
         sdl_sy <= sy;
         sdl_de <= de;
-        sdl_r  <= output_color[23:16];
-        sdl_g  <= output_color[15:8];
-        sdl_b  <= output_color[7:0];
+        sdl_r  <= {output_color[7:5], 5'd0};
+        sdl_g  <= {output_color[4:2], 5'd0};
+        sdl_b  <= {output_color[1:0], 6'd0};
     end
 
     initial begin
