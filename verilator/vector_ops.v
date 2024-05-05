@@ -106,7 +106,7 @@ module VEC_dot (
     output [26:0] o_dot
 );
     wire [26:0] x_prod, y_prod, xy_sum;
-    reg [26:0] z_prod_pipe[1:0];
+    reg [26:0] z_prod_pipe[2:0];
     FpMul x_prod_mul (
         .iA(i_a_x),
         .iB(i_b_x),
@@ -131,10 +131,11 @@ module VEC_dot (
     FpAdd xyz_sum (
         .iCLK(i_clk),
         .iA  (xy_sum),
-        .iB  (z_prod_pipe[1]),
+        .iB  (z_prod_pipe[2]),
         .oSum(o_dot)
     );
     always @(posedge i_clk) begin
+        z_prod_pipe[2] <= z_prod_pipe[1];
         z_prod_pipe[1] <= z_prod_pipe[0];
     end
 
@@ -147,7 +148,6 @@ module VEC_norm (
     input [26:0] i_z,
     output [26:0] o_mag
 );
-    // 4 + 5 = 9 cycles to complete
     wire [26:0] x_squared, y_squared, z_squared, dot;
     VEC_dot sqr_dot (
         .i_clk(i_clk),

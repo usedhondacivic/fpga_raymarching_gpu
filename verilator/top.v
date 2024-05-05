@@ -69,7 +69,7 @@ module top (
     wire [7:0] blue;
     wire [`CORDW-1:0] x, y;
     raymarcher RM (
-        .clk(clk_pix),
+        .clk(clk_50),
         .reset(sim_rst),
         .look_at_1_1(look_at_1_1),
         .look_at_1_2(look_at_1_2),

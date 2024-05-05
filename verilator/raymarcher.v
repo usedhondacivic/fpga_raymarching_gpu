@@ -5,14 +5,14 @@
 `define SCREEN_WIDTH 640
 `define SCREEN_HEIGHT 480
 
-`define NUM_ITR 6
+`define ITR_PER_LOOP 6
+`define NUM_LOOPS 3
 
-`define EPSILON 27'h1ee6666 // 0.1
+// `define EPSILON 27'h1ee6666 // 0.1
 // `define EPSILON 27'h1e11eb8 //0.01
-// `define EPSILON 27'h1f26666 // 0.2
+`define EPSILON 27'h1f26666 // 0.2
 
 `define MAX_DIST 27'h2180000
-
 // glsl float z = u_resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
 // see get_fov_magic_num.c and fractal.frag
 `define FOV_MAGIC_NUMBER 27'h1fc0000
@@ -47,7 +47,10 @@ module distance_to_color (
     assign col   = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
     // assign col   = 8'd255 - distance_int[7:0] + 8'd125;
     assign red   = col;
-    assign green = hit ? 8'd255 - distance_int[8:1] + 8'd125 : 8'd0;
+    // assign green = hit ? 8'd255 - distance_int[8:1] + 8'd125 : 8'd0;
+    // assign red   = hit ? 8'd255 : 8'd0;
+    // assign green = hit ? 8'd255 : 8'd0;
+    assign green = 0;
     // assign blue  = col;
 endmodule
 
@@ -233,9 +236,11 @@ module sdf (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 11
+    parameter SDF_STAGES = 12
 ) (
     input clk,
+    input [`CORDW-1:0] pixel_x,
+    input [`CORDW-1:0] pixel_y,
     input [26:0] point_x,
     input [26:0] point_y,
     input [26:0] point_z,
@@ -243,8 +248,6 @@ module ray_stage #(
     input [26:0] frag_dir_y,
     input [26:0] frag_dir_z,
     input [26:0] depth,
-    // input hit,
-    // input max_depth,
     output reg [26:0] o_point_x,
     output reg [26:0] o_point_y,
     output reg [26:0] o_point_z,
@@ -252,23 +255,25 @@ module ray_stage #(
     output reg [26:0] o_frag_dir_y,
     output reg [26:0] o_frag_dir_z,
     output reg [26:0] o_depth,
-    output reg o_hit
-    // output reg o_max_depth
+    output reg [`CORDW-1:0] o_pixel_x,
+    output reg [`CORDW-1:0] o_pixel_y,
+    output reg o_hit,
+    output reg o_max_depth
 );
     reg [26:0]
-        point_x_pipe[SDF_STAGES+1:0], point_y_pipe[SDF_STAGES+1:0], point_z_pipe[SDF_STAGES+1:0];
+        point_x_pipe[SDF_STAGES+2:0], point_y_pipe[SDF_STAGES+2:0], point_z_pipe[SDF_STAGES+2:0];
     reg [26:0]
-        frag_dir_x_pipe[SDF_STAGES+1:0],
-        frag_dir_y_pipe[SDF_STAGES+1:0],
-        frag_dir_z_pipe[SDF_STAGES+1:0];
-    reg  [26:0] depth_pipe[SDF_STAGES+1:0];
+        frag_dir_x_pipe[SDF_STAGES+2:0],
+        frag_dir_y_pipe[SDF_STAGES+2:0],
+        frag_dir_z_pipe[SDF_STAGES+2:0];
+    reg [`CORDW-1:0] pixel_x_pipe[SDF_STAGES+2:0], pixel_y_pipe[SDF_STAGES+2:0];
+    reg  [26:0] depth_pipe[SDF_STAGES+2:0];
     wire [26:0] distance;
     wire [26:0] scaled_frag_x, scaled_frag_y, scaled_frag_z;
     wire [26:0] new_point_x, new_point_y, new_point_z;
     wire [26:0] new_depth;
+    reg hit_pipe[2:0];
     reg max_depth;
-    reg max_depth_pipe[1:0];
-    reg hit;
 
     sdf SDF (
         .clk(clk),
@@ -314,30 +319,33 @@ module ray_stage #(
     FpCompare ep_compare (
         .iA(`EPSILON),
         .iB(distance),
-        .oA_larger(hit)
+        .oA_larger(hit_pipe[0])
     );
     FpCompare max_dist_compare (
         .iA(new_depth),
         .iB(`MAX_DIST),
-        .oA_larger(max_depth_pipe[0])
+        .oA_larger(max_depth)
     );
 
     always @(posedge clk) begin
-        o_hit <= hit;
-        max_depth <= max_depth_pipe[1];
-        max_depth_pipe[1] <= max_depth_pipe[0];
-        o_point_x <= (hit | max_depth) ? point_x_pipe[SDF_STAGES+1] : new_point_x;
-        o_point_y <= (hit | max_depth) ? point_y_pipe[SDF_STAGES+1] : new_point_y;
-        o_point_z <= (hit | max_depth) ? point_z_pipe[SDF_STAGES+1] : new_point_z;
-        o_frag_dir_x <= frag_dir_x_pipe[SDF_STAGES+1];
-        o_frag_dir_y <= frag_dir_y_pipe[SDF_STAGES+1];
-        o_frag_dir_z <= frag_dir_z_pipe[SDF_STAGES+1];
-        o_depth <= (hit | max_depth) ? depth_pipe[SDF_STAGES+1] : new_depth;
+        o_max_depth <= max_depth;
+        o_hit <= hit_pipe[2];
+        hit_pipe[2] <= hit_pipe[1];
+        hit_pipe[1] <= hit_pipe[0];
+        o_point_x <= hit_pipe[2] ? point_x_pipe[SDF_STAGES+2] : new_point_x;
+        o_point_y <= hit_pipe[2] ? point_y_pipe[SDF_STAGES+2] : new_point_y;
+        o_point_z <= hit_pipe[2] ? point_z_pipe[SDF_STAGES+2] : new_point_z;
+        o_frag_dir_x <= frag_dir_x_pipe[SDF_STAGES+2];
+        o_frag_dir_y <= frag_dir_y_pipe[SDF_STAGES+2];
+        o_frag_dir_z <= frag_dir_z_pipe[SDF_STAGES+2];
+        o_pixel_x <= pixel_x_pipe[SDF_STAGES+2];
+        o_pixel_y <= pixel_y_pipe[SDF_STAGES+2];
+        o_depth <= hit_pipe[2] ? depth_pipe[SDF_STAGES+2] : new_depth;
     end
 
     genvar i;
     generate
-        for (i = 0; i < SDF_STAGES + 1; i = i + 1) begin : g_ray_pipeline
+        for (i = 0; i < SDF_STAGES + 2; i = i + 1) begin : g_ray_pipeline
             always @(posedge clk) begin
                 /* verilator lint_off BLKSEQ*/
                 point_x_pipe[0] = point_x;
@@ -346,6 +354,8 @@ module ray_stage #(
                 frag_dir_x_pipe[0] = frag_dir_x;
                 frag_dir_y_pipe[0] = frag_dir_y;
                 frag_dir_z_pipe[0] = frag_dir_z;
+                pixel_x_pipe[0] = pixel_x;
+                pixel_y_pipe[0] = pixel_y;
                 depth_pipe[0] = depth;
                 /* verilator lint_on BLKSEQ */
                 point_x_pipe[i+1] <= point_x_pipe[i];
@@ -354,6 +364,8 @@ module ray_stage #(
                 frag_dir_x_pipe[i+1] <= frag_dir_x_pipe[i];
                 frag_dir_y_pipe[i+1] <= frag_dir_y_pipe[i];
                 frag_dir_z_pipe[i+1] <= frag_dir_z_pipe[i];
+                pixel_x_pipe[i+1] <= pixel_x_pipe[i];
+                pixel_y_pipe[i+1] <= pixel_y_pipe[i];
                 depth_pipe[i+1] <= depth_pipe[i];
             end
         end
@@ -379,38 +391,27 @@ rayInfo raymarch() {
 module raymarcher #(
     parameter PIPELINE_OFFSET = 60
 ) (
-    input               clk,
-    input               reset,
-    input  [      26:0] look_at_1_1,  // Look at matrix, calculated on the HPS
-    input  [      26:0] look_at_1_2,  // https://lygia.xyz/space/lookAt
-    input  [      26:0] look_at_1_3,
-    input  [      26:0] look_at_2_1,
-    input  [      26:0] look_at_2_2,
-    input  [      26:0] look_at_2_3,
-    input  [      26:0] look_at_3_1,
-    input  [      26:0] look_at_3_2,
-    input  [      26:0] look_at_3_3,
-    input  [      26:0] eye_x,
-    input  [      26:0] eye_y,
-    input  [      26:0] eye_z,
-    output [`CORDW-1:0] o_pixel_x,
-    output [`CORDW-1:0] o_pixel_y,
-    output [       7:0] o_red,
-    output [       7:0] o_green,
-    output [       7:0] o_blue
+    input                   clk,
+    input                   reset,
+    input      [      26:0] look_at_1_1,  // Look at matrix, calculated on the HPS
+    input      [      26:0] look_at_1_2,  // https://lygia.xyz/space/lookAt
+    input      [      26:0] look_at_1_3,
+    input      [      26:0] look_at_2_1,
+    input      [      26:0] look_at_2_2,
+    input      [      26:0] look_at_2_3,
+    input      [      26:0] look_at_3_1,
+    input      [      26:0] look_at_3_2,
+    input      [      26:0] look_at_3_3,
+    input      [      26:0] eye_x,
+    input      [      26:0] eye_y,
+    input      [      26:0] eye_z,
+    output reg [`CORDW-1:0] o_pixel_x,
+    output reg [`CORDW-1:0] o_pixel_y,
+    output reg [       7:0] o_red,
+    output reg [       7:0] o_green,
+    output reg [       7:0] o_blue
 );
     reg [`CORDW-1:0] x, y;
-    always @(posedge clk) begin
-        if (reset) begin
-            x <= 0;
-            y <= 0;
-        end else begin
-            x <= x == `SCREEN_WIDTH ? 0 : x + 1;
-            y <= x == `SCREEN_WIDTH ? (y == `SCREEN_HEIGHT ? 0 : y + 1) : y;
-        end
-    end
-    assign o_pixel_x = x;
-    assign o_pixel_y = y;
 
     wire [`CORDW-1:0] pixel_pipeline_adj_x;
     assign pixel_pipeline_adj_x =
@@ -421,11 +422,13 @@ module raymarcher #(
     assign pixel_pipeline_adj_y = x + PIPELINE_OFFSET > `SCREEN_WIDTH ? y + 1 : y;
 
 
-    wire [26:0] frag_dir_x[`NUM_ITR:0], frag_dir_y[`NUM_ITR:0], frag_dir_z[`NUM_ITR:0];
+    reg [26:0]
+        frag_dir_x[`ITR_PER_LOOP:0], frag_dir_y[`ITR_PER_LOOP:0], frag_dir_z[`ITR_PER_LOOP:0];
+
     frag_to_world_vector F (
         .i_clk(clk),
-        .i_x(pixel_pipeline_adj_x),
-        .i_y(pixel_pipeline_adj_y),
+        .i_x(x),
+        .i_y(y),
         .look_at_1_1(look_at_1_1),
         .look_at_1_2(look_at_1_2),
         .look_at_1_3(look_at_1_3),
@@ -440,26 +443,75 @@ module raymarcher #(
         .o_z(frag_dir_z[0])
     );
 
-    reg [26:0] depth[`NUM_ITR:0];
-    reg [26:0] point_x[`NUM_ITR:0], point_y[`NUM_ITR:0], point_z[`NUM_ITR:0];
-    reg hit[`NUM_ITR:0];
-    reg max_depth[`NUM_ITR:0];
-    reg [9:0] itr_before_hit[`NUM_ITR:0];
+    reg [26:0] depth[`ITR_PER_LOOP:0];
+    reg [26:0] point_x[`ITR_PER_LOOP:0], point_y[`ITR_PER_LOOP:0], point_z[`ITR_PER_LOOP:0];
+    reg [`CORDW-1:0] pixel_x[`ITR_PER_LOOP:0], pixel_y[`ITR_PER_LOOP:0];
+    reg hit[`ITR_PER_LOOP:0], max_depth[`ITR_PER_LOOP:0];
+    reg [9:0] itr_before_hit[`ITR_PER_LOOP:0];
+
+    wire send_new_pixel;
+    reg [5:0] pipeline_fill_counter;
+    reg pipeline_full;
+
+    assign send_new_pixel = hit[`ITR_PER_LOOP] | max_depth[`ITR_PER_LOOP] | ~pipeline_full;
+    // assign send_new_pixel = 1;
 
     always @(posedge clk) begin
-        hit[0] <= 0;
-        itr_before_hit[0] <= 0;
-        max_depth[0] <= 0;
-        depth[0] <= 0;
-        point_x[0] <= eye_x;
-        point_y[0] <= eye_y;
-        point_z[0] <= eye_z;
+        if (reset) begin
+            x <= 0;
+            y <= 0;
+            pipeline_fill_counter <= 0;
+            pipeline_full <= 0;
+        end else if (send_new_pixel) begin
+            // Set fresh raymarch initial values
+            hit[0] <= 0;
+            itr_before_hit[0] <= 0;
+            depth[0] <= 0;
+            point_x[0] <= eye_x;
+            point_y[0] <= eye_y;
+            point_z[0] <= eye_z;
+            pixel_x[0] <= x;
+            pixel_y[0] <= y;
+
+            // Bump next pixel location
+            x <= x == `SCREEN_WIDTH ? 0 : x + 1;
+            y <= x == `SCREEN_WIDTH ? (y == `SCREEN_HEIGHT ? 0 : y + 1) : y;
+
+            // Update outputs
+            o_pixel_x <= pixel_x[`ITR_PER_LOOP];
+            o_pixel_y <= pixel_y[`ITR_PER_LOOP];
+            o_red <= red;
+            o_green <= green;
+            o_blue <= blue;
+        end else begin
+            // Pixel is not done being solved, keep trying
+            hit[0] <= hit[`ITR_PER_LOOP];
+            itr_before_hit[0] <= itr_before_hit[`ITR_PER_LOOP];
+            depth[0] <= depth[`ITR_PER_LOOP];
+            point_x[0] <= point_x[`ITR_PER_LOOP];
+            point_y[0] <= point_y[`ITR_PER_LOOP];
+            point_z[0] <= point_z[`ITR_PER_LOOP];
+            pixel_x[0] <= pixel_x[`ITR_PER_LOOP];
+            pixel_y[0] <= pixel_y[`ITR_PER_LOOP];
+            frag_dir_x[0] <= frag_dir_x[`ITR_PER_LOOP];
+            frag_dir_y[0] <= frag_dir_y[`ITR_PER_LOOP];
+            frag_dir_z[0] <= frag_dir_z[`ITR_PER_LOOP];
+        end
+
+        if (pipeline_fill_counter < `ITR_PER_LOOP) begin
+            pipeline_fill_counter <= pipeline_fill_counter + 1;
+        end else begin
+            pipeline_full <= 1;
+        end
     end
+
     genvar n;
     generate
-        for (n = 0; n < `NUM_ITR; n = n + 1) begin : g_ray_stages
+        for (n = 0; n < `ITR_PER_LOOP; n = n + 1) begin : g_ray_stages
             ray_stage its_not_a_stage_mom (
                 .clk(clk),
+                .pixel_x(pixel_x[n]),
+                .pixel_y(pixel_y[n]),
                 .point_x(point_x[n]),
                 .point_y(point_y[n]),
                 .point_z(point_z[n]),
@@ -473,20 +525,25 @@ module raymarcher #(
                 .o_frag_dir_x(frag_dir_x[n+1]),
                 .o_frag_dir_y(frag_dir_y[n+1]),
                 .o_frag_dir_z(frag_dir_z[n+1]),
+                .o_pixel_x(pixel_x[n+1]),
+                .o_pixel_y(pixel_y[n+1]),
                 .o_depth(depth[n+1]),
-                .o_hit(hit[n+1])
+                .o_hit(hit[n+1]),
+                .o_max_depth(max_depth[n+1])
             );
         end
     endgenerate
 
+    wire [7:0] red, green, blue;
     distance_to_color COLOR (
-        .distance(depth[`NUM_ITR]),
-        .num_itr(itr_before_hit[`NUM_ITR]),
-        .hit(hit[`NUM_ITR]),
-        .red(o_red),
-        .green(o_green),
-        .blue(o_blue)
+        .distance(depth[`ITR_PER_LOOP]),
+        .num_itr(itr_before_hit[`ITR_PER_LOOP]),
+        .hit(hit[`ITR_PER_LOOP]),
+        .red(red),
+        .green(green),
+        .blue(blue)
     );
+
 endmodule
 
 /* verilator lint_on UNUSEDSIGNAL */
