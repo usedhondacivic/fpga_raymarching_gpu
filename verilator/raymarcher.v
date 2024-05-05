@@ -8,9 +8,9 @@
 `define ITR_PER_LOOP 6
 `define NUM_LOOPS 3
 
-// `define EPSILON 27'h1ee6666 // 0.1
+`define EPSILON 27'h1ee6666 // 0.1
 // `define EPSILON 27'h1e11eb8 //0.01
-`define EPSILON 27'h1f26666 // 0.2
+// `define EPSILON 27'h1f26666 // 0.2
 
 `define MAX_DIST 27'h2180000
 // glsl float z = u_resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
@@ -311,7 +311,7 @@ module ray_stage #(
 
     FpAdd new_depth_add (
         .iCLK(clk),
-        .iA  (depth),
+        .iA  (depth_pipe[SDF_STAGES]),
         .iB  (distance),
         .oSum(new_depth)
     );
