@@ -47,7 +47,7 @@ module distance_to_color (
     assign col   = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
     // assign col   = 8'd255 - distance_int[7:0] + 8'd125;
     assign red   = col;
-    assign green = col;
+    assign green = hit ? 8'd255 - distance_int[8:1] + 8'd125 : 8'd0;
     // assign blue  = col;
 endmodule
 
