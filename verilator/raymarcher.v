@@ -379,46 +379,47 @@ rayInfo raymarch() {
 module raymarcher #(
     parameter PIPELINE_OFFSET = 60
 ) (
-    input                   clk,
-    input   	[`CORDW-1:0] pixel_x,      // horizontal SDL position
-    input  		[`CORDW-1:0] pixel_y,      // vertical SDL position
-    input      [      26:0] look_at_1_1,  // Look at matrix, calculated on the HPS
-    input      [      26:0] look_at_1_2,  // https://lygia.xyz/space/lookAt
-    input      [      26:0] look_at_1_3,
-    input      [      26:0] look_at_2_1,
-    input      [      26:0] look_at_2_2,
-    input      [      26:0] look_at_2_3,
-    input      [      26:0] look_at_3_1,
-    input      [      26:0] look_at_3_2,
-    input      [      26:0] look_at_3_3,
-    input      [      26:0] eye_x,
-    input      [      26:0] eye_y,
-    input      [      26:0] eye_z,
-    output     [       7:0] red,
-    output     [       7:0] green,
-    output     [       7:0] blue
+    input               clk,
+    input               reset,
+    input  [      26:0] look_at_1_1,  // Look at matrix, calculated on the HPS
+    input  [      26:0] look_at_1_2,  // https://lygia.xyz/space/lookAt
+    input  [      26:0] look_at_1_3,
+    input  [      26:0] look_at_2_1,
+    input  [      26:0] look_at_2_2,
+    input  [      26:0] look_at_2_3,
+    input  [      26:0] look_at_3_1,
+    input  [      26:0] look_at_3_2,
+    input  [      26:0] look_at_3_3,
+    input  [      26:0] eye_x,
+    input  [      26:0] eye_y,
+    input  [      26:0] eye_z,
+    output [`CORDW-1:0] o_pixel_x,
+    output [`CORDW-1:0] o_pixel_y,
+    output [       7:0] o_red,
+    output [       7:0] o_green,
+    output [       7:0] o_blue
 );
+    reg [`CORDW-1:0] x, y;
+    always @(posedge clk) begin
+        if (reset) begin
+            x <= 0;
+            y <= 0;
+        end else begin
+            x <= x == `SCREEN_WIDTH ? 0 : x + 1;
+            y <= x == `SCREEN_WIDTH ? (y == `SCREEN_HEIGHT ? 0 : y + 1) : y;
+        end
+    end
+    assign o_pixel_x = x;
+    assign o_pixel_y = y;
+
     wire [`CORDW-1:0] pixel_pipeline_adj_x;
     assign pixel_pipeline_adj_x =
-		pixel_x > `SCREEN_WIDTH ? `SCREEN_WIDTH :
-		pixel_x + PIPELINE_OFFSET > `SCREEN_WIDTH ? PIPELINE_OFFSET - pixel_x :
-		pixel_x + PIPELINE_OFFSET;
+		x + PIPELINE_OFFSET > `SCREEN_WIDTH ? PIPELINE_OFFSET - x
+										    : x + PIPELINE_OFFSET;
 
     wire [`CORDW-1:0] pixel_pipeline_adj_y;
-    assign pixel_pipeline_adj_y =
-		pixel_y > `SCREEN_HEIGHT ? `SCREEN_HEIGHT :
-		pixel_x + PIPELINE_OFFSET > `SCREEN_WIDTH ? pixel_y + 1 :
-		pixel_y;
+    assign pixel_pipeline_adj_y = x + PIPELINE_OFFSET > `SCREEN_WIDTH ? y + 1 : y;
 
-    wire [26:0] pixel_x_fp, pixel_y_fp;
-    Int2Fp px_fp (
-        .iInteger({6'd0, pixel_pipeline_adj_x}),
-        .oA(pixel_x_fp)
-    );
-    Int2Fp py_fp (
-        .iInteger({6'd0, pixel_y}),
-        .oA(pixel_y_fp)
-    );
 
     wire [26:0] frag_dir_x[`NUM_ITR:0], frag_dir_y[`NUM_ITR:0], frag_dir_z[`NUM_ITR:0];
     frag_to_world_vector F (
@@ -466,8 +467,6 @@ module raymarcher #(
                 .frag_dir_y(frag_dir_y[n]),
                 .frag_dir_z(frag_dir_z[n]),
                 .depth(depth[n]),
-                // .hit(hit[n]),
-                // .max_depth(max_depth[n]),
                 .o_point_x(point_x[n+1]),
                 .o_point_y(point_y[n+1]),
                 .o_point_z(point_z[n+1]),
@@ -476,7 +475,6 @@ module raymarcher #(
                 .o_frag_dir_z(frag_dir_z[n+1]),
                 .o_depth(depth[n+1]),
                 .o_hit(hit[n+1])
-                // .o_max_depth(max_depth[n+1])
             );
         end
     endgenerate
@@ -485,9 +483,9 @@ module raymarcher #(
         .distance(depth[`NUM_ITR]),
         .num_itr(itr_before_hit[`NUM_ITR]),
         .hit(hit[`NUM_ITR]),
-        .red(red),
-        .green(green),
-        .blue(blue)
+        .red(o_red),
+        .green(o_green),
+        .blue(o_blue)
     );
 endmodule
 

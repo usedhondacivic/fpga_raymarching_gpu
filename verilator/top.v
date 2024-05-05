@@ -2,6 +2,27 @@
 
 `define CORDW 10 // Coordinate width 2^10 = 1024
 
+/* verilator lint_off DECLFILENAME */
+module M10K (
+    output reg [23:0] q,
+    input [23:0] d,
+    input [18:0] write_address,
+    read_address,
+    input we,
+    clk
+);
+    // force M10K ram style
+    reg [23:0] mem[307200-1:0]  /* synthesis ramstyle = "no_rw_check, M10K" */;
+
+    always @(posedge clk) begin
+        if (we) begin
+            mem[write_address] <= d;
+        end
+        q <= mem[read_address];  // q doesn't get d in this clock cycle
+    end
+endmodule
+/* verilator lint_on DECLFILENAME */
+
 /* verilator lint_off UNUSEDSIGNAL */
 module top (
     /* VGA Simulation */
@@ -46,10 +67,10 @@ module top (
     wire [7:0] red;
     wire [7:0] green;
     wire [7:0] blue;
+    wire [`CORDW-1:0] x, y;
     raymarcher RM (
-        .clk(clk_50),
-        .pixel_x(sx),
-        .pixel_y(sy),
+        .clk(clk_pix),
+        .reset(sim_rst),
         .look_at_1_1(look_at_1_1),
         .look_at_1_2(look_at_1_2),
         .look_at_1_3(look_at_1_3),
@@ -62,18 +83,32 @@ module top (
         .eye_x(eye_x),
         .eye_y(eye_y),
         .eye_z(eye_z),
-        .red(red),
-        .green(green),
-        .blue(blue)
+        .o_pixel_x(x),
+        .o_pixel_y(y),
+        .o_red(red),
+        .o_green(green),
+        .o_blue(blue)
+    );
+    wire [23:0] output_color;
+
+    M10K fake_vga_sdram (
+        .q(output_color),
+        .d({red, green, blue}),
+        /* verilator lint_off WIDTHEXPAND */
+        .write_address(x + y * 640),
+        .read_address(sx + sy * 640),
+        /* verilator lint_on WIDTHEXPAND */
+        .we(1),
+        .clk(clk_50)
     );
 
     always @(posedge clk_pix) begin
         sdl_sx <= sx;
         sdl_sy <= sy;
         sdl_de <= de;
-        sdl_r  <= red;
-        sdl_g  <= green;
-        sdl_b  <= blue;
+        sdl_r  <= output_color[23:16];
+        sdl_g  <= output_color[15:8];
+        sdl_b  <= output_color[7:0];
     end
 
     initial begin
@@ -86,6 +121,7 @@ module top (
     end
 
 endmodule
+
 
 // // define a square with screen coordinates
 // wire square;
