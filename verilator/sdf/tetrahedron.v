@@ -1,3 +1,7 @@
+// SDF_STAGES = 5
+//
+`define INV_SQRT_THREE 27'h1f89e69
+
 // float sdTetrahedron(vec3 point)
 // {
 //     return (max(
@@ -6,16 +10,19 @@
 //     ) - 1.0) / sqrt(3.);
 // }
 
-`define SQRT_THREE 27'h1feed9e
-
-module tetrahedron (
+/* verilator lint_off UNUSEDSIGNAL */
+module tetrahedron #(
+    parameter PIPELINE_STAGES = 1
+) (
     input clk,
     input [26:0] point_x,
     input [26:0] point_y,
     input [26:0] point_z,
     output [26:0] distance
 );
-    wire [26:0] a_1_sum, a_2_sum, b_1_sum, b_2_sum;
+    reg [26:0] point_z_pipe[PIPELINE_STAGES:0];
+
+    wire [26:0] a_1_sum, a_1_abs, a_2_sum, b_1_sum, b_1_abs, b_2_sum;
     FpAdd x_plus_y (
         .iCLK(clk),
         .iA  (point_x),
@@ -28,34 +35,54 @@ module tetrahedron (
         .iB  ({~point_y[26], point_y[25:0]}),
         .oSum(b_1_sum)
     );
+    assign a_1_abs = {1'd0, a_1_sum[25:0]};
+    assign b_1_abs = {1'd0, b_1_sum[25:0]};
     FpAdd minus_z (
         .iCLK(clk),
-        .iA  (a_1_sum),
-        .iB  ({~point_z[26], point_z[25:0]}),
+        .iA  (a_1_abs),
+        .iB  ({~point_z_pipe[PIPELINE_STAGES][26], point_z_pipe[PIPELINE_STAGES][25:0]}),
         .oSum(a_2_sum)
     );
     FpAdd plus_z (
         .iCLK(clk),
-        .iA  (b_1_sum),
-        .iB  (point_z),
+        .iA  (b_1_abs),
+        .iB  (point_z_pipe[PIPELINE_STAGES]),
         .oSum(b_2_sum)
     );
 
     wire a_larger;
     wire [26:0] max;
     FpCompare a_b_comp (
-        .iA(a_1_sum),
-        .iB(b_1_sum),
+        .iA(a_2_sum),
+        .iB(b_2_sum),
         .oA_larger(a_larger)
     );
-    assign max = a_larger ? a_1_sum : b_1_sum;
+    assign max = a_larger ? a_2_sum : b_2_sum;
 
     wire [26:0] minus_one;
-    FpAdd plus_z (
+    FpAdd sub_one (
         .iCLK(clk),
         .iA  (max),
         .iB  (27'h5fc0000),  // -1.0
         .oSum(minus_one)
     );
 
+    FpMul coeff (
+        .iA(minus_one),
+        .iB(`INV_SQRT_THREE),
+        .oProd(distance)
+    );
+
+    genvar i;
+    generate
+        for (i = 0; i < PIPELINE_STAGES; i = i + 1) begin : g_ray_pipeline
+            always @(posedge clk) begin
+                /* verilator lint_off BLKSEQ*/
+                point_z_pipe[0]   <= point_z;
+                /* verilator lint_on BLKSEQ */
+                point_z_pipe[i+1] <= point_z_pipe[i];
+            end
+        end
+    endgenerate
 endmodule
+/* verilator lint_on UNUSEDSIGNAL */

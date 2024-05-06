@@ -22,7 +22,7 @@ int main()
 		   floatToReg27(0.2),
 		   floatToReg27(0.0));
 
-	printf("SQRT 3: %x\n", floatToReg27(sqrtf(3.0)));
+	printf("1 / SQRT 3: %x\n", floatToReg27(1 / sqrtf(3.0)));
 	printf("-1: %x\n", floatToReg27(-1.0));
 	return 0;
 }

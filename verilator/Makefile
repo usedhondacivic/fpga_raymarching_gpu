@@ -58,7 +58,7 @@ VERILATOR_FLAGS += -top-module top
 #VERILATOR_FLAGS += --gdbbt
 
 # Input files for Verilator
-VERILATOR_INPUT = -f input.vc top.v raymarcher.v vector_ops.v floating_point.v simple_480p.v sim_main.cpp sdf/sphere.v sdf/box.v sdf/tetrahedron.v sdf/sdf_ops.v
+VERILATOR_INPUT = -f input.vc top.v raymarcher.v vector_ops.v floating_point.v simple_480p.v sim_main.cpp sdf/sphere.v sdf/box.v sdf/tetrahedron.v sdf/sdf_ops.v sdf/sdf.v
 
 ######################################################################
 default: run
