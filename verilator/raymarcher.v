@@ -4,8 +4,7 @@
 `define SCREEN_WIDTH 640
 `define SCREEN_HEIGHT 480
 
-`define ITR_PER_LOOP 6
-`define NUM_LOOPS 3
+`define ITR_PER_LOOP 4
 
 // `define EPSILON 27'h1ee6666 // 0.1
 `define EPSILON 27'h1e11eb8 //0.01
