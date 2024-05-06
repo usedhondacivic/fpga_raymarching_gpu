@@ -435,7 +435,7 @@ wire [26:0] eye_x_export,
 			eye_y_export,
 			eye_z_export;
 
-wire [7:0] out_color;
+wire [11:0] out_color;
 
  raymarcher RM (
  	.clk(CLOCK_50),
@@ -456,9 +456,9 @@ wire [7:0] out_color;
 	.o_color(out_color)
  );
 
-assign red = {out_color[7:5], 5'd0};
-assign green = {out_color[4:2], 5'd0};
-assign blue = {out_color[1:0], 6'd0};
+assign red = {out_color[11:8], 4'd0};
+assign green = {out_color[7:4], 4'd0};
+assign blue = {out_color[3:0], 4'd0};
 
  always@(posedge M10k_pll) begin
 	// Zero everything in reset

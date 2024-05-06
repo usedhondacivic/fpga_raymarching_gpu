@@ -302,21 +302,24 @@ module ray_stage #(
         o_pixel_y <= pixel_y_pipe[SDF_STAGES+2];
         o_depth <= hit_pipe[2] | max_depth ? depth_pipe[SDF_STAGES+2] : new_depth;
     end
+	 
+	 always @(posedge clk) begin
+		 /* verilator lint_off BLKSEQ*/
+		 point_x_pipe[0] <= point_x;
+		 point_y_pipe[0] <= point_y;
+		 point_z_pipe[0] <= point_z;
+		 frag_dir_x_pipe[0] <= frag_dir_x;
+		 frag_dir_y_pipe[0] <= frag_dir_y;
+		 frag_dir_z_pipe[0] <= frag_dir_z;
+		 pixel_x_pipe[0] <= pixel_x;
+		 pixel_y_pipe[0] <= pixel_y;
+		 depth_pipe[0] <= depth;
+	end
 
-    genvar i;
+	genvar i;
     generate
         for (i = 0; i < SDF_STAGES + 2; i = i + 1) begin : g_ray_pipeline
             always @(posedge clk) begin
-                /* verilator lint_off BLKSEQ*/
-                point_x_pipe[0] <= point_x;
-                point_y_pipe[0] <= point_y;
-                point_z_pipe[0] <= point_z;
-                frag_dir_x_pipe[0] <= frag_dir_x;
-                frag_dir_y_pipe[0] <= frag_dir_y;
-                frag_dir_z_pipe[0] <= frag_dir_z;
-                pixel_x_pipe[0] <= pixel_x;
-                pixel_y_pipe[0] <= pixel_y;
-                depth_pipe[0] <= depth;
                 /* verilator lint_on BLKSEQ */
                 point_x_pipe[i+1] <= point_x_pipe[i];
                 point_y_pipe[i+1] <= point_y_pipe[i];
@@ -453,7 +456,7 @@ module raymarcher #(
 
     genvar i;
     generate
-        for (i = 0; i < FRAG_DIR_PIPELINE_CYCLES; i = i + 1) begin : g_ray_stages
+        for (i = 0; i < FRAG_DIR_PIPELINE_CYCLES; i = i + 1) begin : g_frag_vec_stages
             always @(posedge clk) begin
                 depth[i+1]   <= depth[i];
                 point_x[i+1] <= point_x[i];
@@ -467,11 +470,6 @@ module raymarcher #(
     genvar n;
     generate
         for (n = 0; n < ITR_PER_LOOP; n = n + 1) begin : g_ray_stages
-            always @(posedge clk) begin
-                frag_dir_x[n+1] <= frag_dir_x[n];
-                frag_dir_y[n+1] <= frag_dir_y[n];
-                frag_dir_z[n+1] <= frag_dir_z[n];
-            end
             ray_stage its_not_a_stage_mom (
                 .clk(clk),
                 .pixel_x(pixel_x[n+FRAG_DIR_PIPELINE_CYCLES]),
