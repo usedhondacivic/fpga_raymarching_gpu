@@ -1,4 +1,4 @@
-// SDF_STAGES = 10
+// SDF_STAGES = 9
 module sphere (
     input clk,
     input [26:0] point_x,

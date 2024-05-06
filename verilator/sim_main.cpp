@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 								  SDL_WINDOWPOS_CENTERED,
 								  H_RES,
 								  V_RES,
-								  SDL_WINDOW_SHOWN);
+								  SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 	if (!sdl_window) {
 		printf("Window creation failed: %s\n", SDL_GetError());
 		return 1;

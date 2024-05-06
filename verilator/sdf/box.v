@@ -1,5 +1,5 @@
 /* verilator lint_off UNUSEDSIGNAL */
-// SDF_STAGES = 12
+// SDF_STAGES = 11
 module box (
     input clk,
     input [26:0] point_x,

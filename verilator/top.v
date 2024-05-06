@@ -43,9 +43,10 @@ module top (
         .de
     );
 
-    wire [7:0] output_color;
+    wire [11:0] output_color;
     raymarcher RM (
         .clk(clk_50),
+        .m10k_clk(clk_50),
         .reset(sim_rst),
         .look_at_1_1(look_at_1_1),
         .look_at_1_2(look_at_1_2),
@@ -69,9 +70,9 @@ module top (
         sdl_sx <= sx;
         sdl_sy <= sy;
         sdl_de <= de;
-        sdl_r  <= {output_color[7:5], 5'd0};
-        sdl_g  <= {output_color[4:2], 5'd0};
-        sdl_b  <= {output_color[1:0], 6'd0};
+        sdl_r  <= {output_color[11:8], 4'd0};
+        sdl_g  <= {output_color[7:4], 4'd0};
+        sdl_b  <= {output_color[3:0], 4'd0};
     end
 
     initial begin

@@ -4,13 +4,11 @@
 `define SCREEN_WIDTH 640
 `define SCREEN_HEIGHT 480
 
-`define ITR_PER_LOOP 4
-
 // `define EPSILON 27'h1ee6666 // 0.1
 `define EPSILON 27'h1e11eb8 //0.01
 // `define EPSILON 27'h1f26666 // 0.2
-
-`define MAX_DIST 27'h2180000
+// `define MAX_DIST 27'h2180000
+`define MAX_DIST 27'h20d0000
 // glsl float z = u_resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
 // see get_fov_magic_num.c and fractal.frag
 `define FOV_MAGIC_NUMBER 27'h1fc0000
@@ -22,14 +20,14 @@ module distance_to_color (
     input [26:0] distance,
     input [9:0] num_itr,
     input hit,
-    output [7:0] o_color
+    output [11:0] o_color
 );
     wire [7:0] red, green, blue;
     wire [26:0] distance_scaled;
     wire signed [15:0] distance_int;
     FpShift scale (
         .iA(distance),
-        .iShift(6),
+        .iShift(8),
         .oShifted(distance_scaled)
     );
     Fp2Int dist_fp_2_int (
@@ -41,7 +39,7 @@ module distance_to_color (
     assign blue = hit ? 8'd255 : 8'd0;
     // assign red   = 8'd255 - distance_int[7:0] + 8'd125;
     // assign col   = hit ? 8'd255 : 8'd0;
-    assign col = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
+    assign col = hit ? {distance_int[7], distance_int[6:0]} + 8'd125 : 8'd0;
     // assign col   = 8'd255 - distance_int[7:0] + 8'd125;
     assign red = col;
     // assign green = hit ? 8'd255 - distance_int[8:1] + 8'd125 : 8'd0;
@@ -49,8 +47,8 @@ module distance_to_color (
     // assign green = hit ? 8'd255 : 8'd0;
     assign green = 0;
     // assign blue  = col;
-    assign o_color = hit ? distance_int[7:0] : 8'd0;
-    // assign o_color = {red[7:5], green[7:5], blue[7:6]};
+    // assign o_color = hit ? distance_int[7:0] : 8'd0;
+    assign o_color = {red[7:4], green[7:4], blue[7:4]};
 endmodule
 
 /*
@@ -168,11 +166,13 @@ module sdf (
         .point_x(point_x),
         .point_y(point_y),
         .point_z(point_z),
-        .dim_x(27'h1fc0000),  // 0.2
-        .dim_y(27'h1fc0000),  // 2.0
-        .dim_z(27'h1fc0000),  // 2.0
+        .dim_x(27'h1fc0000),
+        .dim_y(27'h1fc0000),
+        .dim_z(27'h1fc0000),
         .distance(cube_dist)
     );
+
+    // assign distance = cube_dist;
 
     sphere BALL (
         .clk(clk),
@@ -184,8 +184,8 @@ module sdf (
     );
 
     sdf_difference #(
-        .SDF_A_PIPELINE_CYCLES(10),
-        .SDF_B_PIPELINE_CYCLES(12)
+        .SDF_A_PIPELINE_CYCLES(9),
+        .SDF_B_PIPELINE_CYCLES(11)
     ) UNION (
         .clk(clk),
         .i_dist_a(sphere_dist),
@@ -196,7 +196,7 @@ module sdf (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 12
+    parameter SDF_STAGES = 11
 ) (
     input clk,
     input [`CORDW-1:0] pixel_x,
@@ -292,15 +292,15 @@ module ray_stage #(
         o_hit <= hit_pipe[2];
         hit_pipe[2] <= hit_pipe[1];
         hit_pipe[1] <= hit_pipe[0];
-        o_point_x <= hit_pipe[2] ? point_x_pipe[SDF_STAGES+2] : new_point_x;
-        o_point_y <= hit_pipe[2] ? point_y_pipe[SDF_STAGES+2] : new_point_y;
-        o_point_z <= hit_pipe[2] ? point_z_pipe[SDF_STAGES+2] : new_point_z;
+        o_point_x <= hit_pipe[2] | max_depth ? point_x_pipe[SDF_STAGES+2] : new_point_x;
+        o_point_y <= hit_pipe[2] | max_depth ? point_y_pipe[SDF_STAGES+2] : new_point_y;
+        o_point_z <= hit_pipe[2] | max_depth ? point_z_pipe[SDF_STAGES+2] : new_point_z;
         o_frag_dir_x <= frag_dir_x_pipe[SDF_STAGES+2];
         o_frag_dir_y <= frag_dir_y_pipe[SDF_STAGES+2];
         o_frag_dir_z <= frag_dir_z_pipe[SDF_STAGES+2];
         o_pixel_x <= pixel_x_pipe[SDF_STAGES+2];
         o_pixel_y <= pixel_y_pipe[SDF_STAGES+2];
-        o_depth <= hit_pipe[2] ? depth_pipe[SDF_STAGES+2] : new_depth;
+        o_depth <= hit_pipe[2] | max_depth ? depth_pipe[SDF_STAGES+2] : new_depth;
     end
 
     genvar i;
@@ -308,15 +308,15 @@ module ray_stage #(
         for (i = 0; i < SDF_STAGES + 2; i = i + 1) begin : g_ray_pipeline
             always @(posedge clk) begin
                 /* verilator lint_off BLKSEQ*/
-                point_x_pipe[0] = point_x;
-                point_y_pipe[0] = point_y;
-                point_z_pipe[0] = point_z;
-                frag_dir_x_pipe[0] = frag_dir_x;
-                frag_dir_y_pipe[0] = frag_dir_y;
-                frag_dir_z_pipe[0] = frag_dir_z;
-                pixel_x_pipe[0] = pixel_x;
-                pixel_y_pipe[0] = pixel_y;
-                depth_pipe[0] = depth;
+                point_x_pipe[0] <= point_x;
+                point_y_pipe[0] <= point_y;
+                point_z_pipe[0] <= point_z;
+                frag_dir_x_pipe[0] <= frag_dir_x;
+                frag_dir_y_pipe[0] <= frag_dir_y;
+                frag_dir_z_pipe[0] <= frag_dir_z;
+                pixel_x_pipe[0] <= pixel_x;
+                pixel_y_pipe[0] <= pixel_y;
+                depth_pipe[0] <= depth;
                 /* verilator lint_on BLKSEQ */
                 point_x_pipe[i+1] <= point_x_pipe[i];
                 point_y_pipe[i+1] <= point_y_pipe[i];
@@ -348,8 +348,13 @@ rayInfo raymarch() {
     return rayInfo(vec3(0.0, 1.0, 0.0));
 }
 */
-module raymarcher (
+module raymarcher #(
+    parameter ITR_PER_LOOP = 5,
+    parameter FRAG_DIR_PIPELINE_CYCLES = 8,
+    parameter PIPELINE_ARR_SIZE = ITR_PER_LOOP + FRAG_DIR_PIPELINE_CYCLES
+) (
     input                   clk,
+    input                   m10k_clk,
     input                   reset,
     input      [      26:0] look_at_1_1,   // Look at matrix, calculated on the HPS
     input      [      26:0] look_at_1_2,   // https://lygia.xyz/space/lookAt
@@ -365,21 +370,73 @@ module raymarcher (
     input      [      26:0] eye_z,
     input      [`CORDW-1:0] read_pixel_x,
     input      [`CORDW-1:0] read_pixel_y,
-    output reg [       7:0] o_color
+    output reg [      11:0] o_color
 );
     reg [`CORDW-1:0] x, y;
-    reg [`CORDW-1:0] write_pixel_x;
-    reg [`CORDW-1:0] write_pixel_y;
 
+    reg [26:0] frag_dir_x[ITR_PER_LOOP:0], frag_dir_y[ITR_PER_LOOP:0], frag_dir_z[ITR_PER_LOOP:0];
+
+
+    reg [26:0] depth[PIPELINE_ARR_SIZE:0];
     reg [26:0]
-        frag_dir_x[`ITR_PER_LOOP:0], frag_dir_y[`ITR_PER_LOOP:0], frag_dir_z[`ITR_PER_LOOP:0];
+        point_x[PIPELINE_ARR_SIZE:0], point_y[PIPELINE_ARR_SIZE:0], point_z[PIPELINE_ARR_SIZE:0];
+    reg [`CORDW-1:0] pixel_x[PIPELINE_ARR_SIZE:0], pixel_y[PIPELINE_ARR_SIZE:0];
+    reg hit[PIPELINE_ARR_SIZE:0], max_depth[PIPELINE_ARR_SIZE:0];
+    reg [9:0] itr_before_hit[PIPELINE_ARR_SIZE:0];
 
-    wire [26:0] new_frag_dir_x, new_frag_dir_y, new_frag_dir_z;
+    wire send_new_pixel;
+    reg [9:0] pipeline_fill_counter;
+    reg pipeline_full;
+
+    assign send_new_pixel = hit[PIPELINE_ARR_SIZE] | max_depth[PIPELINE_ARR_SIZE] | ~pipeline_full;
+
+    // assign send_new_pixel = 1;
+
+    always @(posedge clk) begin
+        if (reset) begin
+            /* verilator lint_off BLKSEQ*/
+            x <= 0;
+            y <= 0;
+            pipeline_fill_counter <= 0;
+            pipeline_full <= 0;
+            /* verilator lint_on BLKSEQ*/
+        end else if (send_new_pixel) begin
+            // Set fresh raymarch initial values
+            /* verilator lint_off BLKSEQ*/
+            itr_before_hit[0] <= 0;
+            depth[0] <= 0;
+            point_x[0] <= eye_x;
+            point_y[0] <= eye_y;
+            point_z[0] <= eye_z;
+            pixel_x[0] <= x;
+            pixel_y[0] <= y;
+            x <= x == `SCREEN_WIDTH - 1 ? 0 : x + 1;
+            y <= x == `SCREEN_WIDTH - 1 ? (y == `SCREEN_HEIGHT - 1 ? 0 : y + 1) : y;
+            /* verilator lint_on BLKSEQ*/
+        end else begin
+            // Pixel is not done being solved, keep trying
+            /* verilator lint_off BLKSEQ*/
+            depth[0]   <= depth[PIPELINE_ARR_SIZE];
+            point_x[0] <= point_x[PIPELINE_ARR_SIZE];
+            point_y[0] <= point_y[PIPELINE_ARR_SIZE];
+            point_z[0] <= point_z[PIPELINE_ARR_SIZE];
+            pixel_x[0] <= pixel_x[PIPELINE_ARR_SIZE];
+            pixel_y[0] <= pixel_y[PIPELINE_ARR_SIZE];
+            /* verilator lint_on BLKSEQ*/
+        end
+        /* verilator lint_off BLKSEQ*/
+        if (pipeline_fill_counter < 1000) begin
+            pipeline_fill_counter <= pipeline_fill_counter + 1;
+        end else begin
+            pipeline_full <= 1;
+        end
+        /* verilator lint_on BLKSEQ*/
+    end
 
     frag_to_world_vector F (
         .i_clk(clk),
-        .i_x(x),
-        .i_y(y),
+        .i_x(pixel_x[0]),
+        .i_y(pixel_y[0]),
         .look_at_1_1(look_at_1_1),
         .look_at_1_2(look_at_1_2),
         .look_at_1_3(look_at_1_3),
@@ -389,135 +446,96 @@ module raymarcher (
         .look_at_3_1(look_at_3_1),
         .look_at_3_2(look_at_3_2),
         .look_at_3_3(look_at_3_3),
-        .o_x(new_frag_dir_x),
-        .o_y(new_frag_dir_y),
-        .o_z(new_frag_dir_z)
+        .o_x(frag_dir_x[0]),
+        .o_y(frag_dir_y[0]),
+        .o_z(frag_dir_z[0])
     );
 
-    reg [26:0] depth[`ITR_PER_LOOP:0];
-    reg [26:0] point_x[`ITR_PER_LOOP:0], point_y[`ITR_PER_LOOP:0], point_z[`ITR_PER_LOOP:0];
-    reg [`CORDW-1:0] pixel_x[`ITR_PER_LOOP:0], pixel_y[`ITR_PER_LOOP:0];
-    reg hit[`ITR_PER_LOOP:0], max_depth[`ITR_PER_LOOP:0];
-    reg [9:0] itr_before_hit[`ITR_PER_LOOP:0];
-
-    wire send_new_pixel;
-    reg [5:0] pipeline_fill_counter;
-    reg pipeline_full;
-
-    assign send_new_pixel = hit[`ITR_PER_LOOP] | max_depth[`ITR_PER_LOOP] | ~pipeline_full;
-    // assign send_new_pixel = 1;
-
-    always @(posedge clk) begin
-        if (reset) begin
-            x <= 0;
-            y <= 0;
-            pipeline_fill_counter <= 0;
-            pipeline_full <= 0;
-        end else if (send_new_pixel) begin
-            // Set fresh raymarch initial values
-            hit[0] <= 0;
-            itr_before_hit[0] <= 0;
-            depth[0] <= 0;
-            point_x[0] <= eye_x;
-            point_y[0] <= eye_y;
-            point_z[0] <= eye_z;
-            pixel_x[0] <= x;
-            pixel_y[0] <= y;
-            frag_dir_x[0] <= new_frag_dir_x;
-            frag_dir_y[0] <= new_frag_dir_y;
-            frag_dir_z[0] <= new_frag_dir_z;
-
-            // Bump next pixel location
-            x <= x == `SCREEN_WIDTH ? 0 : x + 1;
-            y <= x == `SCREEN_WIDTH ? (y == `SCREEN_HEIGHT ? 0 : y + 1) : y;
-
-            // Update outputs
-            write_pixel_x <= pixel_x[`ITR_PER_LOOP];
-            write_pixel_y <= pixel_y[`ITR_PER_LOOP];
-            write_color <= color_output;
-        end else begin
-            // Pixel is not done being solved, keep trying
-            hit[0] <= hit[`ITR_PER_LOOP];
-            itr_before_hit[0] <= itr_before_hit[`ITR_PER_LOOP];
-            depth[0] <= depth[`ITR_PER_LOOP];
-            point_x[0] <= point_x[`ITR_PER_LOOP];
-            point_y[0] <= point_y[`ITR_PER_LOOP];
-            point_z[0] <= point_z[`ITR_PER_LOOP];
-            pixel_x[0] <= pixel_x[`ITR_PER_LOOP];
-            pixel_y[0] <= pixel_y[`ITR_PER_LOOP];
-            frag_dir_x[0] <= frag_dir_x[`ITR_PER_LOOP];
-            frag_dir_y[0] <= frag_dir_y[`ITR_PER_LOOP];
-            frag_dir_z[0] <= frag_dir_z[`ITR_PER_LOOP];
+    genvar i;
+    generate
+        for (i = 0; i < FRAG_DIR_PIPELINE_CYCLES; i = i + 1) begin : g_ray_stages
+            always @(posedge clk) begin
+                depth[i+1]   <= depth[i];
+                point_x[i+1] <= point_x[i];
+                point_y[i+1] <= point_y[i];
+                point_z[i+1] <= point_z[i];
+                pixel_x[i+1] <= pixel_x[i];
+                pixel_y[i+1] <= pixel_y[i];
+            end
         end
-
-        if (pipeline_fill_counter < `ITR_PER_LOOP) begin
-            pipeline_fill_counter <= pipeline_fill_counter + 1;
-        end else begin
-            pipeline_full <= 1;
-        end
-    end
-
+    endgenerate
     genvar n;
     generate
-        for (n = 0; n < `ITR_PER_LOOP; n = n + 1) begin : g_ray_stages
+        for (n = 0; n < ITR_PER_LOOP; n = n + 1) begin : g_ray_stages
+            always @(posedge clk) begin
+                frag_dir_x[n+1] <= frag_dir_x[n];
+                frag_dir_y[n+1] <= frag_dir_y[n];
+                frag_dir_z[n+1] <= frag_dir_z[n];
+            end
             ray_stage its_not_a_stage_mom (
                 .clk(clk),
-                .pixel_x(pixel_x[n]),
-                .pixel_y(pixel_y[n]),
-                .point_x(point_x[n]),
-                .point_y(point_y[n]),
-                .point_z(point_z[n]),
+                .pixel_x(pixel_x[n+FRAG_DIR_PIPELINE_CYCLES]),
+                .pixel_y(pixel_y[n+FRAG_DIR_PIPELINE_CYCLES]),
+                .point_x(point_x[n+FRAG_DIR_PIPELINE_CYCLES]),
+                .point_y(point_y[n+FRAG_DIR_PIPELINE_CYCLES]),
+                .point_z(point_z[n+FRAG_DIR_PIPELINE_CYCLES]),
                 .frag_dir_x(frag_dir_x[n]),
                 .frag_dir_y(frag_dir_y[n]),
                 .frag_dir_z(frag_dir_z[n]),
-                .depth(depth[n]),
-                .o_point_x(point_x[n+1]),
-                .o_point_y(point_y[n+1]),
-                .o_point_z(point_z[n+1]),
+                .depth(depth[n+FRAG_DIR_PIPELINE_CYCLES]),
+                .o_point_x(point_x[n+FRAG_DIR_PIPELINE_CYCLES+1]),
+                .o_point_y(point_y[n+FRAG_DIR_PIPELINE_CYCLES+1]),
+                .o_point_z(point_z[n+FRAG_DIR_PIPELINE_CYCLES+1]),
                 .o_frag_dir_x(frag_dir_x[n+1]),
                 .o_frag_dir_y(frag_dir_y[n+1]),
                 .o_frag_dir_z(frag_dir_z[n+1]),
-                .o_pixel_x(pixel_x[n+1]),
-                .o_pixel_y(pixel_y[n+1]),
-                .o_depth(depth[n+1]),
-                .o_hit(hit[n+1]),
-                .o_max_depth(max_depth[n+1])
+                .o_pixel_x(pixel_x[n+FRAG_DIR_PIPELINE_CYCLES+1]),
+                .o_pixel_y(pixel_y[n+FRAG_DIR_PIPELINE_CYCLES+1]),
+                .o_depth(depth[n+FRAG_DIR_PIPELINE_CYCLES+1]),
+                .o_hit(hit[n+FRAG_DIR_PIPELINE_CYCLES+1]),
+                .o_max_depth(max_depth[n+FRAG_DIR_PIPELINE_CYCLES+1])
             );
         end
     endgenerate
 
-    wire [7:0] color_output;
-    reg  [7:0] write_color;
+    wire [11:0] color_output;
+    reg  [11:0] write_color;
     distance_to_color COLOR (
-        .distance(depth[`ITR_PER_LOOP]),
-        .num_itr(itr_before_hit[`ITR_PER_LOOP]),
-        .hit(hit[`ITR_PER_LOOP]),
+        .distance(depth[PIPELINE_ARR_SIZE]),
+        .num_itr(itr_before_hit[PIPELINE_ARR_SIZE]),
+        .hit(hit[PIPELINE_ARR_SIZE] & ~max_depth[PIPELINE_ARR_SIZE]),
         .o_color(color_output)
     );
+
+    wire [`CORDW-1:0] write_pixel_x;
+    wire [`CORDW-1:0] write_pixel_y;
+    assign write_pixel_x = pixel_x[PIPELINE_ARR_SIZE];
+    assign write_pixel_y = pixel_y[PIPELINE_ARR_SIZE];
+    assign write_color   = color_output;
 
     M10K do_electric_sheep_dream_of_24_bit_color (
         .q(o_color),
         .d(write_color),
         /* verilator lint_off WIDTHEXPAND */
-        .write_address(write_pixel_x + write_pixel_y * 640),
-        .read_address(read_pixel_x + read_pixel_y * 640),
+        .write_address(write_pixel_x + write_pixel_y * `SCREEN_WIDTH),
+        .read_address(read_pixel_x + read_pixel_y * `SCREEN_WIDTH),
         /* verilator lint_on WIDTHEXPAND */
         .we(1),
-        .clk(clk)
+        .clk(m10k_clk)
     );
 
 endmodule
 
 module M10K (
-    output reg [7:0] q,
-    input [7:0] d,
+    output reg [11:0] q,
+    input [11:0] d,
     input [18:0] write_address,
     read_address,
     input we,
     clk
 );
     // force M10K ram style
-    reg [7:0] mem[307200-1:0]  /* synthesis ramstyle = "no_rw_check, M10K" */;
+    reg [11:0] mem[307200-1:0]  /* synthesis ramstyle = "no_rw_check, M10K" */;
 
     always @(posedge clk) begin
         if (we) begin
