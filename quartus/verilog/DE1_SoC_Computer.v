@@ -439,6 +439,7 @@ wire [11:0] out_color;
 
  raymarcher RM (
  	.clk(CLOCK_50),
+	.m10k_clk(CLOCK_50),
  	.look_at_1_1(lookat_1_1_export[26:0]),
  	.look_at_1_2(lookat_1_2_export[26:0]),
  	.look_at_1_3(lookat_1_3_export[26:0]),
