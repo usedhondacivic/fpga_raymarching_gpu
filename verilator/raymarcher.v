@@ -1,5 +1,4 @@
 `timescale 1ns / 1ps
-
 `define CORDW 10 // Coordinate width 2^10 = 1024
 
 `define SCREEN_WIDTH 640
@@ -31,7 +30,7 @@ module distance_to_color (
     wire signed [15:0] distance_int;
     FpShift scale (
         .iA(distance),
-        .iShift(5),
+        .iShift(6),
         .oShifted(distance_scaled)
     );
     Fp2Int dist_fp_2_int (
@@ -51,7 +50,8 @@ module distance_to_color (
     // assign green = hit ? 8'd255 : 8'd0;
     assign green = 0;
     // assign blue  = col;
-    assign o_color = {red[7:5], green[7:5], blue[7:6]};
+    assign o_color = hit ? distance_int[7:0] : 8'd0;
+    // assign o_color = {red[7:5], green[7:5], blue[7:6]};
 endmodule
 
 /*
@@ -155,15 +155,6 @@ module frag_to_world_vector (
     );
 endmodule
 
-/*
-* sdf
-* INPUTS:
-	* clk - module clock
-	* point_x, _y, _z - x, y, z position of sample point (floating point)
-* OUTPUTS:
-	* distance - distance to scene (floating point)
-*/
-// Sphere sdf, radius 1
 module sdf (
     input clk,
     input [26:0] point_x,
@@ -171,68 +162,38 @@ module sdf (
     input [26:0] point_z,
     output [26:0] distance
 );
-    // Sphere sdf, radius 1
-    // wire [26:0] norm;
-    // VEC_norm circle (
-    //     .i_clk(clk),
-    //     .i_x  (point_x),
-    //     .i_y  (point_y),
-    //     .i_z  (point_z),
-    //     .o_mag(norm)
-    // );
-    // FpAdd norm_sum (
-    //     .iCLK(clk),
-    //     .iA  (norm),
-    //     .iB  (27'h5fc0000),  // -1.0
-    //     .oSum(distance)
-    // );
-    //float sdBox( vec3 p, vec3 b )
-    // {
-    //   vec3 q = abs(p) - b;
-    //   return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
-    // }
-    wire [26:0] q_x, q_y, q_z;
-    VEC_add abs_p_minus_b (
-        .i_clk(clk),
-        .i_a_x({1'b0, point_x[25:0]}),
-        .i_a_y({1'b0, point_y[25:0]}),
-        .i_a_z({1'b0, point_z[25:0]}),
-        .i_b_x(27'h5fc0000),  // -1.0
-        .i_b_y(27'h5fc0000),  // -1.0
-        .i_b_z(27'h5fc0000),  // -1.0
-        .o_add_x(q_x),
-        .o_add_y(q_y),
-        .o_add_z(q_z)
-    );
-    wire y_larger, x_larger;
-    FpCompare q_y_z_comp (
-        .iA(q_y),
-        .iB(q_z),
-        .oA_larger(y_larger)
-    );
-    wire [26:0] q_y_z_max, q_x_y_z_max;
-    assign q_y_z_max = y_larger ? q_y : q_z;
-    FpCompare q_x_y_z_comp (
-        .iA(q_x),
-        .iB(q_y_z_max),
-        .oA_larger(x_larger)
-    );
-    assign q_x_y_z_max = x_larger ? q_x : q_y_z_max;
+    wire [26:0] cube_dist, sphere_dist;
 
-    wire [26:0] q_norm;
-    VEC_norm q_norm_mod (
-        .i_clk(clk),
-        .i_x  (q_x[26] ? 0 : q_x),
-        .i_y  (q_y[26] ? 0 : q_y),
-        .i_z  (q_z[26] ? 0 : q_z),
-        .o_mag(q_norm)
+    box BOX (
+        .clk(clk),
+        .point_x(point_x),
+        .point_y(point_y),
+        .point_z(point_z),
+        .dim_x(27'h1fc0000),  // 0.2
+        .dim_y(27'h1fc0000),  // 2.0
+        .dim_z(27'h1fc0000),  // 2.0
+        .distance(cube_dist)
     );
-    FpAdd output_add (
-        .iCLK(clk),
-        .iA  (q_norm),
-        .iB  (q_x_y_z_max[26] ? q_x_y_z_max : 0),
-        .oSum(distance)
+
+    sphere BALL (
+        .clk(clk),
+        .point_x(point_x),
+        .point_y(point_y),
+        .point_z(point_z),
+        .radius(27'h1fd3333),
+        .distance(sphere_dist)
     );
+
+    sdf_difference #(
+        .SDF_A_PIPELINE_CYCLES(10),
+        .SDF_B_PIPELINE_CYCLES(12)
+    ) UNION (
+        .clk(clk),
+        .i_dist_a(sphere_dist),
+        .i_dist_b(cube_dist),
+        .o_dist(distance)
+    );
+
 endmodule
 
 module ray_stage #(
@@ -413,11 +374,8 @@ module raymarcher (
 
     reg [26:0]
         frag_dir_x[`ITR_PER_LOOP:0], frag_dir_y[`ITR_PER_LOOP:0], frag_dir_z[`ITR_PER_LOOP:0];
-		  
-	wire [26:0]
-        new_frag_dir_x,
-        new_frag_dir_y,
-        new_frag_dir_z;
+
+    wire [26:0] new_frag_dir_x, new_frag_dir_y, new_frag_dir_z;
 
     frag_to_world_vector F (
         .i_clk(clk),
