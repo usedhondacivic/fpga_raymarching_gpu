@@ -1,4 +1,4 @@
-
+`define COLOR_SIZE 15:0
 
 module DE1_SoC_Computer (
 	////////////////////////////////////
@@ -435,11 +435,12 @@ wire [26:0] eye_x_export,
 			eye_y_export,
 			eye_z_export;
 
-wire [11:0] out_color;
+wire [`COLOR_SIZE] out_color;
 
  raymarcher RM (
  	.clk(CLOCK_50),
-	.m10k_clk(CLOCK_50),
+	.m10k_clk(M10k_pll),
+	.reset(vga_reset),
  	.look_at_1_1(lookat_1_1_export[26:0]),
  	.look_at_1_2(lookat_1_2_export[26:0]),
  	.look_at_1_3(lookat_1_3_export[26:0]),
@@ -457,9 +458,9 @@ wire [11:0] out_color;
 	.o_color(out_color)
  );
 
-assign red = {out_color[11:8], 4'd0};
-assign green = {out_color[7:4], 4'd0};
-assign blue = {out_color[3:0], 4'd0};
+assign red = {out_color[15:11], 3'd0};
+assign green = {out_color[10:5], 2'd0};
+assign blue = {out_color[4:0], 3'd0};
 
  always@(posedge M10k_pll) begin
 	// Zero everything in reset
@@ -859,30 +860,5 @@ module vga_driver (
 	// assign next_x = h_counter;
 	// assign next_y = v_counter;
 
-endmodule
-
-//============================================================
-// M10K module for testing
-//============================================================
-// See example 12-16 in 
-// http://people.ece.cornell.edu/land/courses/ece5760/DE1_SOC/HDL_style_qts_qii51007.pdf
-//============================================================
-
-module M10K_1000_8( 
-    output reg [7:0] q,
-    input [7:0] d,
-    input [18:0] write_address, read_address,
-    input we, clk
-);
-	 // force M10K ram style
-	 // 307200 words of 8 bits
-    reg [7:0] mem [307200:0]  /* synthesis ramstyle = "no_rw_check, M10K" */;
-	 
-    always @ (posedge clk) begin
-        if (we) begin
-            mem[write_address] <= d;
-		  end
-        q <= mem[read_address]; // q doesn't get d in this clock cycle
-    end
 endmodule
 
