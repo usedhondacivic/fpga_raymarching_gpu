@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`define COLOR_SIZE 15:0
+
 `define CORDW 10 // Coordinate width 2^10 = 1024
 
 /* verilator lint_off UNUSEDSIGNAL */
@@ -43,7 +45,7 @@ module top (
         .de
     );
 
-    wire [11:0] output_color;
+    wire [`COLOR_SIZE] output_color;
     raymarcher RM (
         .clk(clk_50),
         .m10k_clk(clk_50),
@@ -70,9 +72,9 @@ module top (
         sdl_sx <= sx;
         sdl_sy <= sy;
         sdl_de <= de;
-        sdl_r  <= {output_color[11:8], 4'd0};
-        sdl_g  <= {output_color[7:4], 4'd0};
-        sdl_b  <= {output_color[3:0], 4'd0};
+        sdl_r  <= {output_color[15:11], 3'd0};
+        sdl_g  <= {output_color[10:5], 2'd0};
+        sdl_b  <= {output_color[4:0], 3'd0};
     end
 
     initial begin
