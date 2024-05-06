@@ -13,9 +13,10 @@ int main()
 		   M_PI / 4.0,
 		   z,
 		   floatToReg27(z));
-	printf("640: %x\n480: %x\n20: %x\n1.5: %x\n2: %x\n0.2: %x\n0.0: %x\n",
+	printf("640: %x\n480: %x\n30: %x\n1.5: %x\n2: %x\n0.2: %x\n0.0: %x\n",
 		   floatToReg27(640.0),
 		   floatToReg27(480.0),
+		   floatToReg27(30.0),
 		   floatToReg27(20.0),
 		   floatToReg27(1.3),
 		   floatToReg27(2.0),

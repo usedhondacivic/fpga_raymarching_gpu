@@ -7,8 +7,8 @@
 // `define EPSILON 27'h1ee6666 // 0.1
 `define EPSILON 27'h1e11eb8 //0.01
 // `define EPSILON 27'h1f26666 // 0.2
-// `define MAX_DIST 27'h2180000
-`define MAX_DIST 27'h20d0000
+`define MAX_DIST 27'h2180000
+// `define MAX_DIST 27'h20d0000
 // glsl float z = u_resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
 // see get_fov_magic_num.c and fractal.frag
 `define FOV_MAGIC_NUMBER 27'h1fc0000
@@ -350,7 +350,7 @@ rayInfo raymarch() {
 */
 module raymarcher #(
     parameter ITR_PER_LOOP = 5,
-    parameter FRAG_DIR_PIPELINE_CYCLES = 8,
+    parameter FRAG_DIR_PIPELINE_CYCLES = 9,
     parameter PIPELINE_ARR_SIZE = ITR_PER_LOOP + FRAG_DIR_PIPELINE_CYCLES
 ) (
     input                   clk,
@@ -395,40 +395,40 @@ module raymarcher #(
     always @(posedge clk) begin
         if (reset) begin
             /* verilator lint_off BLKSEQ*/
-            x <= 0;
-            y <= 0;
-            pipeline_fill_counter <= 0;
-            pipeline_full <= 0;
+            x = 0;
+            y = 0;
+            pipeline_fill_counter = 0;
+            pipeline_full = 0;
             /* verilator lint_on BLKSEQ*/
         end else if (send_new_pixel) begin
             // Set fresh raymarch initial values
             /* verilator lint_off BLKSEQ*/
-            itr_before_hit[0] <= 0;
-            depth[0] <= 0;
-            point_x[0] <= eye_x;
-            point_y[0] <= eye_y;
-            point_z[0] <= eye_z;
-            pixel_x[0] <= x;
-            pixel_y[0] <= y;
-            x <= x == `SCREEN_WIDTH - 1 ? 0 : x + 1;
-            y <= x == `SCREEN_WIDTH - 1 ? (y == `SCREEN_HEIGHT - 1 ? 0 : y + 1) : y;
+            itr_before_hit[0] = 0;
+            depth[0] = 0;
+            point_x[0] = eye_x;
+            point_y[0] = eye_y;
+            point_z[0] = eye_z;
+            pixel_x[0] = x;
+            pixel_y[0] = y;
+            x = x == `SCREEN_WIDTH - 1 ? 0 : x + 1;
+            y = x == `SCREEN_WIDTH - 1 ? (y == `SCREEN_HEIGHT - 1 ? 0 : y + 1) : y;
             /* verilator lint_on BLKSEQ*/
         end else begin
             // Pixel is not done being solved, keep trying
             /* verilator lint_off BLKSEQ*/
-            depth[0]   <= depth[PIPELINE_ARR_SIZE];
-            point_x[0] <= point_x[PIPELINE_ARR_SIZE];
-            point_y[0] <= point_y[PIPELINE_ARR_SIZE];
-            point_z[0] <= point_z[PIPELINE_ARR_SIZE];
-            pixel_x[0] <= pixel_x[PIPELINE_ARR_SIZE];
-            pixel_y[0] <= pixel_y[PIPELINE_ARR_SIZE];
+            depth[0]   = depth[PIPELINE_ARR_SIZE];
+            point_x[0] = point_x[PIPELINE_ARR_SIZE];
+            point_y[0] = point_y[PIPELINE_ARR_SIZE];
+            point_z[0] = point_z[PIPELINE_ARR_SIZE];
+            pixel_x[0] = pixel_x[PIPELINE_ARR_SIZE];
+            pixel_y[0] = pixel_y[PIPELINE_ARR_SIZE];
             /* verilator lint_on BLKSEQ*/
         end
         /* verilator lint_off BLKSEQ*/
         if (pipeline_fill_counter < 1000) begin
-            pipeline_fill_counter <= pipeline_fill_counter + 1;
+            pipeline_fill_counter = pipeline_fill_counter + 1;
         end else begin
-            pipeline_full <= 1;
+            pipeline_full = 1;
         end
         /* verilator lint_on BLKSEQ*/
     end
