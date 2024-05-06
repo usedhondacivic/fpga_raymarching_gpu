@@ -13,7 +13,6 @@
 // see get_fov_magic_num.c and fractal.frag
 `define FOV_MAGIC_NUMBER 27'h1fc0000
 
-
 `define COLOR_SIZE 15:0
 
 /* verilator lint_off DECLFILENAME */

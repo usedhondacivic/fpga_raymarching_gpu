@@ -17,10 +17,12 @@ int main()
 		   floatToReg27(640.0),
 		   floatToReg27(480.0),
 		   floatToReg27(30.0),
-		   floatToReg27(20.0),
 		   floatToReg27(1.3),
 		   floatToReg27(2.0),
 		   floatToReg27(0.2),
 		   floatToReg27(0.0));
+
+	printf("SQRT 3: %x\n", floatToReg27(sqrtf(3.0)));
+	printf("-1: %x\n", floatToReg27(-1.0));
 	return 0;
 }
