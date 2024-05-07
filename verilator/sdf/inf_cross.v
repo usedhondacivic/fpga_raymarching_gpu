@@ -1,4 +1,4 @@
-// SDF_STAGES = 2
+// SDF_STAGES = 1
 
 // float sdCross( in vec3 p )
 // {

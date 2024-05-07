@@ -1,6 +1,25 @@
 /* verilator lint_off DECLFILENAME */
 /* verilator lint_off UNUSEDSIGNAL */
 
+function static [26:0] get_exp_diff([26:0] num, integer exp);
+    return num[25:18] - exp;
+endfunction
+
+module FP_mod_two (
+    input  [26:0] i_num,
+    output [26:0] o_num_mod_two
+);
+    wire [26:0] rounded_div;
+    // Clear the low bits corresponding to < 2, ie round to the nearest 2
+    assign rounded_div = (i_num > get_exp_diff(i_num, 1)) < get_exp_diff(i_num, 1);
+    // Subtract out the rounded result, the rest is mod 2
+    FpAdd mod_sub (
+        .iA  (i_num),
+        .iB  ({~rounded_div[26], rounded_div[25:0]}),
+        .oSum(o_num_mod_two)
+    );
+endmodule
+
 module FP_sqrt #(
     parameter PIPELINE_STAGES = 4
 ) (
@@ -62,6 +81,29 @@ module VEC_add (
         .iA  (i_a_z),
         .iB  (i_b_z),
         .oSum(o_add_z)
+    );
+endmodule
+
+module VEC_mod_two (
+    input i_clk,
+    input [26:0] i_a_x,
+    input [26:0] i_a_y,
+    input [26:0] i_a_z,
+    output [26:0] o_mod_x,
+    output [26:0] o_mod_y,
+    output [26:0] o_mod_z
+);
+    Fp_mod_two x_mod (
+        .i_num(i_a_x),
+        .o_num_mod_two(o_mod_x)
+    );
+    Fp_mod_two x_mod (
+        .i_num(i_a_y),
+        .o_num_mod_two(o_mod_y)
+    );
+    Fp_mod_two z_mod (
+        .i_num(i_a_z),
+        .o_num_mod_two(o_mod_z)
     );
 endmodule
 

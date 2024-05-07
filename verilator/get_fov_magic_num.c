@@ -5,6 +5,15 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
+// https://stackoverflow.com/questions/49139283/are-there-any-numbers-that-enable-fast-modulo-calculation-on-floats
+unsigned int power_of_two_mod(unsigned int fp_rep, int E)
+{
+	// Bits [25:18] = exponent
+	char exp = fp_rep >> 18 & 0xFF;
+	unsigned int exp_dif = (exp - 127) - E;
+	unsigned int bits_to_keep = 18 - exp_dif;
+}
+
 int main()
 {
 	// glsl float z = u_resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
@@ -24,5 +33,6 @@ int main()
 
 	printf("1 / SQRT 3: %x\n", floatToReg27(1 / sqrtf(3.0)));
 	printf("-1: %x\n", floatToReg27(-1.0));
+	printf("3: %x\n", floatToReg27(3.0));
 	return 0;
 }

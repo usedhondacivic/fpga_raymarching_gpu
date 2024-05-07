@@ -47,12 +47,21 @@ module sdf (
     //     .distance(distance)
     // );
 
-    inf_cross CROSS (
+    // inf_cross CROSS (
+    //     .clk(clk),
+    //     .point_x(point_x),
+    //     .point_y(point_y),
+    //     .point_z(point_z),
+    //     .distance(distance)
+    // );
+
+    menger MENG (
         .clk(clk),
         .point_x(point_x),
         .point_y(point_y),
         .point_z(point_z),
         .distance(distance)
     );
+
 
 endmodule
