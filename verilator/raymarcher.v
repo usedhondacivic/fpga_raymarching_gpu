@@ -155,7 +155,7 @@ module frag_to_world_vector (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 5
+    parameter SDF_STAGES = 1
 ) (
     input clk,
     input [`CORDW-1:0] pixel_x,

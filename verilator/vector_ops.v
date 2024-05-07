@@ -168,7 +168,7 @@ endmodule
 
 
 module VEC_normalize #(
-    parameter PIPELINE_STAGES = 4
+    parameter PIPELINE_STAGES = 3
 ) (
     input i_clk,
     input [26:0] i_x,
@@ -220,9 +220,9 @@ module VEC_normalize #(
         for (i = 0; i < PIPELINE_STAGES; i = i + 1) begin : g_ray_pipeline
             always @(posedge i_clk) begin
                 /* verilator lint_off BLKSEQ*/
-                point_x_pipe[0] = i_x;
-                point_y_pipe[0] = i_y;
-                point_z_pipe[0] = i_z;
+                point_x_pipe[0]   <= i_x;
+                point_y_pipe[0]   <= i_y;
+                point_z_pipe[0]   <= i_z;
                 /* verilator lint_on BLKSEQ */
                 point_x_pipe[i+1] <= point_x_pipe[i];
                 point_y_pipe[i+1] <= point_y_pipe[i];

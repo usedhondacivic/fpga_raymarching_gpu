@@ -39,7 +39,15 @@ module sdf (
     //     .o_dist(distance)
     // );
 
-    tetrahedron TETRA (
+    // tetrahedron TETRA (
+    //     .clk(clk),
+    //     .point_x(point_x),
+    //     .point_y(point_y),
+    //     .point_z(point_z),
+    //     .distance(distance)
+    // );
+
+    inf_cross CROSS (
         .clk(clk),
         .point_x(point_x),
         .point_y(point_y),
