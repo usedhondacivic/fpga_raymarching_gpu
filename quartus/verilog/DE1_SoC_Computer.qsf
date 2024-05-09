@@ -972,6 +972,10 @@ set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
 set_global_assignment -name FITTER_EFFORT "AUTO FIT"
 set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
 set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
+set_global_assignment -name VERILOG_FILE ../../verilator/sdf/sdf.v
+set_global_assignment -name VERILOG_FILE ../../verilator/sdf/menger.v
+set_global_assignment -name VERILOG_FILE ../../verilator/sdf/inf_cross.v
+set_global_assignment -name VERILOG_FILE ../../verilator/sdf/cross.v
 set_global_assignment -name VERILOG_FILE ../../verilator/sdf/tetrahedron.v
 set_global_assignment -name VERILOG_FILE ../../verilator/sdf/sphere.v
 set_global_assignment -name VERILOG_FILE ../../verilator/sdf/sdf_ops.v

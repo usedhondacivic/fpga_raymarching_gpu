@@ -271,16 +271,15 @@ module VEC_normalize #(
         .iB(inv_sqrt),
         .oProd(o_norm_z)
     );
-	 always @(posedge i_clk) begin
-		 /* verilator lint_off BLKSEQ*/
-		 point_x_pipe[0]   <= i_x;
-		 point_y_pipe[0]   <= i_y;
-		 point_z_pipe[0]   <= i_z;
-	end
     genvar i;
     generate
         for (i = 0; i < PIPELINE_STAGES; i = i + 1) begin : g_ray_pipeline
             always @(posedge i_clk) begin
+                /* verilator lint_off BLKSEQ*/
+                point_x_pipe[0]   <= i_x;
+                point_y_pipe[0]   <= i_y;
+                point_z_pipe[0]   <= i_z;
+                /* verilator lint_on BLKSEQ */
                 point_x_pipe[i+1] <= point_x_pipe[i];
                 point_y_pipe[i+1] <= point_y_pipe[i];
                 point_z_pipe[i+1] <= point_z_pipe[i];
