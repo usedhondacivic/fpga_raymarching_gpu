@@ -13,7 +13,7 @@
 // see get_fov_magic_num.c and fractal.frag
 `define FOV_MAGIC_NUMBER 27'h1fc0000
 
-`define COLOR_SIZE 15:0
+`define COLOR_SIZE 10:0
 
 /* verilator lint_off DECLFILENAME */
 /* verilator lint_off UNUSEDSIGNAL */
@@ -63,7 +63,7 @@ module distance_to_color (
     assign red = hit ? {red_distance_int[7], red_distance_int[6:0]} + 8'd125 : 8'd0;
     assign green = hit ? {green_distance_int[7], green_distance_int[6:0]} + 8'd125 : 8'd0;
     assign blue = hit ? {blue_distance_int[7], blue_distance_int[6:0]} + 8'd125 : 8'd0;
-    assign o_color = {red[7:3], green[7:2], blue[7:3]};
+    assign o_color = {red[7:4], green[7:4], blue[7:5]};
 endmodule
 
 /*

@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-`define COLOR_SIZE 15:0
+`define COLOR_SIZE 10:0
 
 `define CORDW 10 // Coordinate width 2^10 = 1024
 
@@ -72,9 +72,9 @@ module top (
         sdl_sx <= sx;
         sdl_sy <= sy;
         sdl_de <= de;
-        sdl_r  <= {output_color[15:11], 3'd0};
-        sdl_g  <= {output_color[10:5], 2'd0};
-        sdl_b  <= {output_color[4:0], 3'd0};
+        sdl_r  <= {output_color[10:7], 4'd0};
+        sdl_g  <= {output_color[6:3], 4'd0};
+        sdl_b  <= {output_color[2:0], 5'd0};
     end
 
     initial begin
