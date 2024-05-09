@@ -13,7 +13,7 @@
 // see get_fov_magic_num.c and fractal.frag
 `define FOV_MAGIC_NUMBER 27'h1fc0000
 
-`define COLOR_SIZE 10:0
+`define COLOR_SIZE 9:0
 
 /* verilator lint_off DECLFILENAME */
 /* verilator lint_off UNUSEDSIGNAL */
@@ -63,7 +63,7 @@ module distance_to_color (
     assign red = hit ? {red_distance_int[7], red_distance_int[6:0]} + 8'd125 : 8'd0;
     assign green = hit ? {green_distance_int[7], green_distance_int[6:0]} + 8'd125 : 8'd0;
     assign blue = hit ? {blue_distance_int[7], blue_distance_int[6:0]} + 8'd125 : 8'd0;
-    assign o_color = {red[7:4], green[7:4], blue[7:5]};
+    assign o_color = {red[7:5], green[7:4], blue[7:5]};
 endmodule
 
 /*
@@ -168,7 +168,7 @@ module frag_to_world_vector (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 11
+    parameter SDF_STAGES = 15
 ) (
     input clk,
     input [`CORDW-1:0] pixel_x,
@@ -343,6 +343,12 @@ module raymarcher #(
     input      [       26:0] eye_z,
     input      [ `CORDW-1:0] read_pixel_x,
     input      [ `CORDW-1:0] read_pixel_y,
+    // input      [        7:0] red_shift,
+    // input      [        7:0] green_shift,
+    // input      [        7:0] blue_shift,
+    // input                    red_enable,
+    // input                    green_enable,
+    // input                    blue_enable,
     output reg [`COLOR_SIZE] o_color
 );
     reg [`CORDW-1:0] x, y;
