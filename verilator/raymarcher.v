@@ -309,7 +309,7 @@ rayInfo raymarch() {
 }
 */
 module raymarcher #(
-    parameter ITR_PER_LOOP = 4,
+    parameter ITR_PER_LOOP = 3,
     parameter FRAG_DIR_PIPELINE_CYCLES = 8,
     parameter PIPELINE_ARR_SIZE = ITR_PER_LOOP + FRAG_DIR_PIPELINE_CYCLES
 ) (
