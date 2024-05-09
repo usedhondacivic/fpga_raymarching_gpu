@@ -458,9 +458,9 @@ wire [`COLOR_SIZE] out_color;
 	.o_color(out_color)
  );
 
-assign red = {out_color[15:11], 3'd0};
-assign green = {out_color[10:5], 2'd0};
-assign blue = {out_color[4:0], 3'd0};
+assign red = {out_color[9:7], 5'd0};
+assign green = {out_color[6:3], 4'd0};
+assign blue = {out_color[2:0], 5'd0};
 
  always@(posedge M10k_pll) begin
 	// Zero everything in reset
