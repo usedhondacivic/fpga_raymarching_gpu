@@ -21,35 +21,48 @@
 module distance_to_color (
     input [26:0] distance,
     input [9:0] num_itr,
+    input [3:0] red_shift,
+    input [3:0] green_shift,
+    input [3:0] blue_shift,
     input hit,
     output [`COLOR_SIZE] o_color
 );
     wire [7:0] red, green, blue;
-    wire [26:0] distance_scaled;
-    wire signed [15:0] distance_int;
-    FpShift scale (
+    wire [26:0] red_distance, green_distance, blue_distance;
+    wire signed [15:0] red_distance_int, green_distance_int, blue_distance_int;
+    /* verilator lint_off WIDTHEXPAND */
+    FpShift red_scale (
         .iA(distance),
-        .iShift(8),
-        .oShifted(distance_scaled)
+        .iShift(red_shift),
+        .oShifted(red_distance)
     );
-    Fp2Int dist_fp_2_int (
-        .iA(distance_scaled),
-        .oInteger(distance_int)
+    FpShift green_scale (
+        .iA(distance),
+        .iShift(green_shift),
+        .oShifted(green_distance)
     );
-    wire [7:0] col;
-    // assign green = hit ? 8'd255 - distance_int[7:0] + 8'd125 : 8'd0;
+    FpShift blue_scale (
+        .iA(distance),
+        .iShift(blue_shift),
+        .oShifted(blue_distance)
+    );
+    Fp2Int red_2_int (
+        .iA(red_distance),
+        .oInteger(red_distance_int)
+    );
+    Fp2Int green_2_int (
+        .iA(blue_distance),
+        .oInteger(green_distance_int)
+    );
+    Fp2Int blue_2_int (
+        .iA(green_distance),
+        .oInteger(blue_distance_int)
+    );
+    /* verilator lint_on WIDTHEXPAND */
     assign blue = hit ? 8'd255 : 8'd0;
-    // assign red   = 8'd255 - distance_int[7:0] + 8'd125;
-    // assign col   = hit ? 8'd255 : 8'd0;
-    assign col = hit ? {distance_int[7], distance_int[6:0]} + 8'd125 : 8'd0;
-    // assign col   = 8'd255 - distance_int[7:0] + 8'd125;
-    assign red = col;
-    // assign green = hit ? 8'd255 - distance_int[8:1] + 8'd125 : 8'd0;
-    // assign red   = hit ? 8'd255 : 8'd0;
-    // assign green = hit ? 8'd255 : 8'd0;
-    assign green = 0;
-    // assign blue  = col;
-    // assign o_color = hit ? distance_int[7:0] : 8'd0;
+    assign red = hit ? {red_distance_int[7], red_distance_int[6:0]} + 8'd125 : 8'd0;
+    assign green = hit ? {green_distance_int[7], green_distance_int[6:0]} + 8'd125 : 8'd0;
+    assign blue = hit ? {blue_distance_int[7], blue_distance_int[6:0]} + 8'd125 : 8'd0;
     assign o_color = {red[7:3], green[7:2], blue[7:3]};
 endmodule
 
@@ -155,7 +168,7 @@ module frag_to_world_vector (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 13
+    parameter SDF_STAGES = 11
 ) (
     input clk,
     input [`CORDW-1:0] pixel_x,
@@ -451,6 +464,9 @@ module raymarcher #(
     reg  [`COLOR_SIZE] write_color;
     distance_to_color COLOR (
         .distance(depth[PIPELINE_ARR_SIZE]),
+        .red_shift(8),
+        .green_shift(8),
+        .blue_shift(8),
         .num_itr(itr_before_hit[PIPELINE_ARR_SIZE]),
         .hit(hit[PIPELINE_ARR_SIZE] & ~max_depth[PIPELINE_ARR_SIZE]),
         .o_color(color_output)

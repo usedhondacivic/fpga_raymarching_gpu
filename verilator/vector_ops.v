@@ -4,7 +4,7 @@
 function static [7:0] get_exp_diff([26:0] num, [7:0] exp);
     /* verilator lint_off WIDTHEXPAND */
     /* verilator lint_off WIDTHTRUNC */
-    return (num[25:18] - 8'd127) - exp;
+    return (num[25:18] - 127) - exp;
     /* verilator lint_on WIDTHEXPAND */
     /* verilator lint_on WIDTHTRUNC */
 endfunction
@@ -16,13 +16,12 @@ module FP_mod_two (
     output [26:0] o_num_mod_two
 );
     wire [26:0] rounded_div;
+    wire [ 7:0] shift_amount = (8'd18 - get_exp_diff(i_num, 8'd2));
     // Clear the low bits corresponding to < 2, ie round to the nearest 2
-    assign rounded_div = (i_num >> (8'd18 - get_exp_diff(
-        i_num, 8'd3
-    ))) << (8'd18 - get_exp_diff(
-        i_num, 8'd3
-    ));
-    // Subtract out the rounded result, the rest is mod 2
+    assign rounded_div = shift_amount <= 0 ? i_num :
+						 shift_amount >= 18 ? 0 :
+						 i_num >> shift_amount << shift_amount;
+    // Subtract out the rounded result, the rest is remainder
     FpAdd mod_sub (
         .iCLK(i_clk),
         .iA  (i_num),
@@ -271,12 +270,12 @@ module VEC_normalize #(
         .iB(inv_sqrt),
         .oProd(o_norm_z)
     );
-	 always @(posedge i_clk) begin
-		 /* verilator lint_off BLKSEQ*/
-		 point_x_pipe[0]   <= i_x;
-		 point_y_pipe[0]   <= i_y;
-		 point_z_pipe[0]   <= i_z;
-	end
+    always @(posedge i_clk) begin
+        /* verilator lint_off BLKSEQ*/
+        point_x_pipe[0] <= i_x;
+        point_y_pipe[0] <= i_y;
+        point_z_pipe[0] <= i_z;
+    end
     genvar i;
     generate
         for (i = 0; i < PIPELINE_STAGES; i = i + 1) begin : g_ray_pipeline
