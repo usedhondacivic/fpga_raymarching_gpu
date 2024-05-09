@@ -168,7 +168,7 @@ module frag_to_world_vector (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 15
+    parameter SDF_STAGES = 11
 ) (
     input clk,
     input [`CORDW-1:0] pixel_x,
@@ -322,7 +322,7 @@ rayInfo raymarch() {
 }
 */
 module raymarcher #(
-    parameter ITR_PER_LOOP = 3,
+    parameter ITR_PER_LOOP = 5,
     parameter FRAG_DIR_PIPELINE_CYCLES = 8,
     parameter PIPELINE_ARR_SIZE = ITR_PER_LOOP + FRAG_DIR_PIPELINE_CYCLES
 ) (
