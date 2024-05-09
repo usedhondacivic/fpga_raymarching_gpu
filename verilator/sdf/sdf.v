@@ -16,7 +16,7 @@ module sdf (
         .o_mod_y(q_y),
         .o_mod_z(q_z)
     );
-    //
+
     // box BOX (
     //     .clk(clk),
     //     .point_x(q_x),
@@ -41,7 +41,7 @@ module sdf (
     //     .point_y(q_y),
     //     .point_z(q_z),
     //     .size(27'h5ee6666),
-    //     .distance(distance)
+    //     .distance(cross_dist)
     // );
     // sdf_difference #(
     //     .SDF_A_PIPELINE_CYCLES(9),
