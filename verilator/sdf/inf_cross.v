@@ -18,6 +18,7 @@ module inf_cross (
     input [26:0] point_x,
     input [26:0] point_y,
     input [26:0] point_z,
+    input [26:0] size,
     output [26:0] distance
 );
     wire xy_comp, yz_comp, zx_comp;
@@ -58,7 +59,7 @@ module inf_cross (
     FpAdd sub_one (
         .iCLK(clk),
         .iA  (da_min),
-        .iB  (27'h5fc0000),  // -1.0
+        .iB  (size),
         .oSum(distance)
     );
 endmodule

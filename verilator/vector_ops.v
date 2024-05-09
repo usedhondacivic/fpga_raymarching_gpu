@@ -1,19 +1,30 @@
 /* verilator lint_off DECLFILENAME */
 /* verilator lint_off UNUSEDSIGNAL */
 
-function static [26:0] get_exp_diff([26:0] num, integer exp);
-    return num[25:18] - exp;
+function static [7:0] get_exp_diff([26:0] num, [7:0] exp);
+    /* verilator lint_off WIDTHEXPAND */
+    /* verilator lint_off WIDTHTRUNC */
+    return (num[25:18] - 8'd127) - exp;
+    /* verilator lint_on WIDTHEXPAND */
+    /* verilator lint_on WIDTHTRUNC */
 endfunction
 
+// https://stackoverflow.com/questions/49139283/are-there-any-numbers-that-enable-fast-modulo-calculation-on-floats
 module FP_mod_two (
-    input  [26:0] i_num,
+    input i_clk,
+    input [26:0] i_num,
     output [26:0] o_num_mod_two
 );
     wire [26:0] rounded_div;
     // Clear the low bits corresponding to < 2, ie round to the nearest 2
-    assign rounded_div = (i_num > get_exp_diff(i_num, 1)) < get_exp_diff(i_num, 1);
+    assign rounded_div = (i_num >> (8'd18 - get_exp_diff(
+        i_num, 8'd3
+    ))) << (8'd18 - get_exp_diff(
+        i_num, 8'd3
+    ));
     // Subtract out the rounded result, the rest is mod 2
     FpAdd mod_sub (
+        .iCLK(i_clk),
         .iA  (i_num),
         .iB  ({~rounded_div[26], rounded_div[25:0]}),
         .oSum(o_num_mod_two)
@@ -93,15 +104,18 @@ module VEC_mod_two (
     output [26:0] o_mod_y,
     output [26:0] o_mod_z
 );
-    Fp_mod_two x_mod (
+    FP_mod_two x_mod (
+        .i_clk(i_clk),
         .i_num(i_a_x),
         .o_num_mod_two(o_mod_x)
     );
-    Fp_mod_two x_mod (
+    FP_mod_two y_mod (
+        .i_clk(i_clk),
         .i_num(i_a_y),
         .o_num_mod_two(o_mod_y)
     );
-    Fp_mod_two z_mod (
+    FP_mod_two z_mod (
+        .i_clk(i_clk),
         .i_num(i_a_z),
         .o_num_mod_two(o_mod_z)
     );
