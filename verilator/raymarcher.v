@@ -59,7 +59,7 @@ module distance_to_color (
         .oInteger(blue_distance_int)
     );
     /* verilator lint_on WIDTHEXPAND */
-    assign blue = hit ? 8'd255 : 8'd0;
+    //assign blue = hit ? 8'd255 : 8'd0;
     assign red = hit ? {red_distance_int[7], red_distance_int[6:0]} + 8'd125 : 8'd0;
     assign green = hit ? {green_distance_int[7], green_distance_int[6:0]} + 8'd125 : 8'd0;
     assign blue = hit ? {blue_distance_int[7], blue_distance_int[6:0]} + 8'd125 : 8'd0;
