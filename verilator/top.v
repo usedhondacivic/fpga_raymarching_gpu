@@ -64,6 +64,14 @@ module top (
         .eye_z(eye_z),
         .read_pixel_x(sx),
         .read_pixel_y(sy),
+        .red_shift(10),
+        .green_shift(8),
+        .blue_shift(6),
+        .fog_shift(2),
+        .red_enable(1),
+        .green_enable(1),
+        .blue_enable(1),
+        .fog_enable(1),
         .o_color(output_color)
     );
 

@@ -7,7 +7,8 @@
 // `define EPSILON 27'h1ee6666 // 0.1
 `define EPSILON 27'h1e11eb8 //0.01
 // `define EPSILON 27'h1f26666 // 0.2
-`define MAX_DIST 27'h2180000
+// `define MAX_DIST 27'h2180000
+`define MAX_DIST 27'h2124000 // 50
 // `define MAX_DIST 27'h20d0000
 // glsl float z = u_resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
 // see get_fov_magic_num.c and fractal.frag
@@ -24,12 +25,17 @@ module distance_to_color (
     input [3:0] red_shift,
     input [3:0] green_shift,
     input [3:0] blue_shift,
+    input [3:0] fog_shift,
+    input red_enable,
+    input green_enable,
+    input blue_enable,
+    input fog_enable,
     input hit,
     output [`COLOR_SIZE] o_color
 );
-    wire [7:0] red, green, blue;
-    wire [26:0] red_distance, green_distance, blue_distance;
-    wire signed [15:0] red_distance_int, green_distance_int, blue_distance_int;
+    wire [7:0] red, green, blue, final_red, final_green, final_blue;
+    wire [26:0] red_distance, green_distance, blue_distance, fog_distance;
+    wire signed [15:0] red_distance_int, green_distance_int, blue_distance_int, fog_distance_int;
     /* verilator lint_off WIDTHEXPAND */
     FpShift red_scale (
         .iA(distance),
@@ -46,24 +52,42 @@ module distance_to_color (
         .iShift(blue_shift),
         .oShifted(blue_distance)
     );
+    FpShift fog_scale (
+        .iA(distance),
+        .iShift(fog_shift),
+        .oShifted(fog_distance)
+    );
     Fp2Int red_2_int (
         .iA(red_distance),
         .oInteger(red_distance_int)
     );
     Fp2Int green_2_int (
-        .iA(blue_distance),
+        .iA(green_distance),
         .oInteger(green_distance_int)
     );
     Fp2Int blue_2_int (
-        .iA(green_distance),
+        .iA(blue_distance),
         .oInteger(blue_distance_int)
+    );
+    Fp2Int fog_2_int (
+        .iA(fog_distance),
+        .oInteger(fog_distance_int)
     );
     /* verilator lint_on WIDTHEXPAND */
     //assign blue = hit ? 8'd255 : 8'd0;
-    assign red = hit ? {red_distance_int[7], red_distance_int[6:0]} + 8'd125 : 8'd0;
-    assign green = hit ? {green_distance_int[7], green_distance_int[6:0]} + 8'd125 : 8'd0;
-    assign blue = hit ? {blue_distance_int[7], blue_distance_int[6:0]} + 8'd125 : 8'd0;
-    assign o_color = {red[7:5], green[7:4], blue[7:5]};
+    assign red = hit & red_enable ? red_distance_int[7:0] : 8'd0;
+    assign green = hit & green_enable ? green_distance_int[7:0] : 8'd0;
+    assign blue = hit & blue_enable ? blue_distance_int[7:0] : 8'd0;
+    assign final_red = ~fog_enable ? red :
+						fog_distance_int[7:0] < red ? red - fog_distance_int[7:0] :
+						0;
+    assign final_green = ~fog_enable ? green :
+						  fog_distance_int[7:0] < green ? green - fog_distance_int[7:0] :
+						  0;
+    assign final_blue = ~fog_enable ? blue :
+						 fog_distance_int[7:0] < blue ? blue - fog_distance_int[7:0] :
+						 0;
+    assign o_color = {final_red[7:5], final_green[7:4], final_blue[7:5]};
 endmodule
 
 /*
@@ -343,12 +367,14 @@ module raymarcher #(
     input      [       26:0] eye_z,
     input      [ `CORDW-1:0] read_pixel_x,
     input      [ `CORDW-1:0] read_pixel_y,
-    // input      [        7:0] red_shift,
-    // input      [        7:0] green_shift,
-    // input      [        7:0] blue_shift,
-    // input                    red_enable,
-    // input                    green_enable,
-    // input                    blue_enable,
+    input      [        3:0] red_shift,
+    input      [        3:0] green_shift,
+    input      [        3:0] blue_shift,
+    input      [        3:0] fog_shift,
+    input                    red_enable,
+    input                    green_enable,
+    input                    blue_enable,
+    input                    fog_enable,
     output reg [`COLOR_SIZE] o_color
 );
     reg [`CORDW-1:0] x, y;
@@ -470,9 +496,14 @@ module raymarcher #(
     reg  [`COLOR_SIZE] write_color;
     distance_to_color COLOR (
         .distance(depth[PIPELINE_ARR_SIZE]),
-        .red_shift(8),
-        .green_shift(8),
-        .blue_shift(8),
+        .red_shift(red_shift),
+        .green_shift(green_shift),
+        .blue_shift(blue_shift),
+        .fog_shift(fog_shift),
+        .red_enable(red_enable),
+        .green_enable(green_enable),
+        .blue_enable(blue_enable),
+        .fog_enable(fog_enable),
         .num_itr(itr_before_hit[PIPELINE_ARR_SIZE]),
         .hit(hit[PIPELINE_ARR_SIZE] & ~max_depth[PIPELINE_ARR_SIZE]),
         .o_color(color_output)

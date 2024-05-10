@@ -27,5 +27,6 @@ int main()
 	printf("3: %x\n", floatToReg27(3.0));
 	printf("-0.1: %x\n", floatToReg27(-0.1));
 	printf("1.0: %x\n", floatToReg27(1.0));
+	printf("50.0: %x\n", floatToReg27(50.0));
 	return 0;
 }
