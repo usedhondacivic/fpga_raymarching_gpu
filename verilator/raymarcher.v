@@ -277,11 +277,11 @@ module ray_stage #(
 
     FpCompare ep_compare (
         .iA(`EPSILON),
-        .iB(distance),
+        .iB({1'b0, distance[25:0]}),
         .oA_larger(hit_pipe[0])
     );
     FpCompare max_dist_compare (
-        .iA(new_depth),
+        .iA({1'b0, new_depth[25:0]}),
         .iB(`MAX_DIST),
         .oA_larger(max_depth)
     );
