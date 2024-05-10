@@ -274,14 +274,14 @@ module ray_stage #(
         .iB  (distance),
         .oSum(new_depth)
     );
-
+    wire eps_compare;
     FpCompare ep_compare (
         .iA(`EPSILON),
-        .iB({1'b0, distance[25:0]}),
-        .oA_larger(hit_pipe[0])
+        .iB(distance),
+        .oA_larger(eps_compare)
     );
     FpCompare max_dist_compare (
-        .iA({1'b0, new_depth[25:0]}),
+        .iA(new_depth),
         .iB(`MAX_DIST),
         .oA_larger(max_depth)
     );
@@ -290,7 +290,7 @@ module ray_stage #(
         o_max_depth <= max_depth;
         o_hit <= hit_pipe[2];
         hit_pipe[2] <= hit_pipe[1];
-        hit_pipe[1] <= hit_pipe[0];
+        hit_pipe[1] <= distance[26] ? 1 : eps_compare;
         o_point_x <= hit_pipe[2] | max_depth ? point_x_pipe[SDF_STAGES+2] : new_point_x;
         o_point_y <= hit_pipe[2] | max_depth ? point_y_pipe[SDF_STAGES+2] : new_point_y;
         o_point_z <= hit_pipe[2] | max_depth ? point_z_pipe[SDF_STAGES+2] : new_point_z;

@@ -1,13 +1,13 @@
 //altiobuf_out CBX_AUTO_BLACKBOX="ALL" CBX_SINGLE_OUTPUT_FILE="ON" DEVICE_FAMILY="Cyclone V" ENABLE_BUS_HOLD="FALSE" NUMBER_OF_CHANNELS=1 OPEN_DRAIN_OUTPUT="FALSE" PSEUDO_DIFFERENTIAL_MODE="TRUE" USE_DIFFERENTIAL_MODE="TRUE" USE_OE="FALSE" USE_OUT_DYNAMIC_DELAY_CHAIN1="FALSE" USE_OUT_DYNAMIC_DELAY_CHAIN2="FALSE" USE_TERMINATION_CONTROL="FALSE" datain dataout dataout_b
-//VERSION_BEGIN 18.1 cbx_altiobuf_out 2018:09:12:13:04:24:SJ cbx_mgl 2018:09:12:13:10:36:SJ cbx_stratixiii 2018:09:12:13:04:24:SJ cbx_stratixv 2018:09:12:13:04:24:SJ  VERSION_END
+//VERSION_BEGIN 23.1 cbx_altiobuf_out 2023:11:29:19:33:05:SC cbx_mgl 2023:11:29:19:43:53:SC cbx_stratixiii 2023:11:29:19:33:06:SC cbx_stratixv 2023:11:29:19:33:05:SC  VERSION_END
 // synthesis VERILOG_INPUT_VERSION VERILOG_2001
 // altera message_off 10463
 
 
 
-// Copyright (C) 2018  Intel Corporation. All rights reserved.
+// Copyright (C) 2023  Intel Corporation. All rights reserved.
 //  Your use of Intel Corporation's design tools, logic functions 
-//  and other software and tools, and its AMPP partner logic 
+//  and other software and tools, and any partner logic 
 //  functions, and any output files from any of the foregoing 
 //  (including device programming or simulation files), and any 
 //  associated documentation or information are expressly subject 
@@ -17,7 +17,8 @@
 //  agreement, including, without limitation, that your use is for
 //  the sole purpose of programming logic devices manufactured by
 //  Intel and sold by Intel or its authorized distributors.  Please
-//  refer to the applicable agreement for further details.
+//  refer to the applicable agreement for further details, at
+//  https://fpgasoftware.intel.com/eula.
 
 
 

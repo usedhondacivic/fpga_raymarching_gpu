@@ -4,9 +4,9 @@ editor if you plan to continue editing the block that represents it in
 the Block Editor! File corruption is VERY likely to occur.
 */
 /*
-Copyright (C) 2018  Intel Corporation. All rights reserved.
+Copyright (C) 2023  Intel Corporation. All rights reserved.
 Your use of Intel Corporation's design tools, logic functions 
-and other software and tools, and its AMPP partner logic 
+and other software and tools, and any partner logic 
 functions, and any output files from any of the foregoing 
 (including device programming or simulation files), and any 
 associated documentation or information are expressly subject 
@@ -16,7 +16,8 @@ the Intel FPGA IP License Agreement, or other applicable license
 agreement, including, without limitation, that your use is for
 the sole purpose of programming logic devices manufactured by
 Intel and sold by Intel or its authorized distributors.  Please
-refer to the applicable agreement for further details.
+refer to the applicable agreement for further details, at
+https://fpgasoftware.intel.com/eula.
 */
 (header "symbol" (version "1.1"))
 (symbol
@@ -108,18 +109,18 @@ refer to the applicable agreement for further details.
 		(line (pt 592 392)(pt 400 392)(line_width 1))
 	)
 	(port
-		(pt 0 1672)
-		(input)
-		(text "system_pll_ref_clk_clk" (rect 0 0 94 12)(font "Arial" (font_size 8)))
-		(text "system_pll_ref_clk_clk" (rect 4 1661 136 1672)(font "Arial" (font_size 8)))
-		(line (pt 0 1672)(pt 192 1672)(line_width 1))
-	)
-	(port
 		(pt 0 1712)
 		(input)
-		(text "system_pll_ref_reset_reset" (rect 0 0 113 12)(font "Arial" (font_size 8)))
-		(text "system_pll_ref_reset_reset" (rect 4 1701 160 1712)(font "Arial" (font_size 8)))
+		(text "system_pll_ref_clk_clk" (rect 0 0 94 12)(font "Arial" (font_size 8)))
+		(text "system_pll_ref_clk_clk" (rect 4 1701 136 1712)(font "Arial" (font_size 8)))
 		(line (pt 0 1712)(pt 192 1712)(line_width 1))
+	)
+	(port
+		(pt 0 1752)
+		(input)
+		(text "system_pll_ref_reset_reset" (rect 0 0 113 12)(font "Arial" (font_size 8)))
+		(text "system_pll_ref_reset_reset" (rect 4 1741 160 1752)(font "Arial" (font_size 8)))
+		(line (pt 0 1752)(pt 192 1752)(line_width 1))
 	)
 	(port
 		(pt 0 72)
@@ -444,6 +445,13 @@ refer to the applicable agreement for further details.
 		(line (pt 0 1632)(pt 192 1632)(line_width 3))
 	)
 	(port
+		(pt 0 1672)
+		(output)
+		(text "repetition_pow_export[31..0]" (rect 0 0 109 12)(font "Arial" (font_size 8)))
+		(text "repetition_pow_export[31..0]" (rect 4 1661 172 1672)(font "Arial" (font_size 8)))
+		(line (pt 0 1672)(pt 192 1672)(line_width 3))
+	)
+	(port
 		(pt 592 432)
 		(output)
 		(text "vga_pio_locked_export" (rect 0 0 93 12)(font "Arial" (font_size 8)))
@@ -456,13 +464,6 @@ refer to the applicable agreement for further details.
 		(text "vga_pio_outclk0_clk" (rect 0 0 81 12)(font "Arial" (font_size 8)))
 		(text "vga_pio_outclk0_clk" (rect 490 461 604 472)(font "Arial" (font_size 8)))
 		(line (pt 592 472)(pt 400 472)(line_width 1))
-	)
-	(port
-		(pt 0 1752)
-		(output)
-		(text "repetition_pow_export[31..0]" (rect 0 0 109 12)(font "Arial" (font_size 8)))
-		(text "repetition_pow_export[31..0]" (rect 4 1741 172 1752)(font "Arial" (font_size 8)))
-		(line (pt 0 1752)(pt 192 1752)(line_width 3))
 	)
 	(port
 		(pt 0 448)
@@ -808,16 +809,16 @@ refer to the applicable agreement for further details.
 		(text "oct_rzqin" (rect 358 387 770 784)(font "Arial" (color 0 0 0)))
 		(text "red_shift" (rect 140 1603 334 3219)(font "Arial" (color 128 0 0)(font_size 9)))
 		(text "export" (rect 197 1627 430 3264)(font "Arial" (color 0 0 0)))
-		(text "system_pll_ref_clk" (rect 81 1643 270 3299)(font "Arial" (color 128 0 0)(font_size 9)))
-		(text "clk" (rect 197 1667 412 3344)(font "Arial" (color 0 0 0)))
-		(text "system_pll_ref_reset" (rect 67 1683 254 3379)(font "Arial" (color 128 0 0)(font_size 9)))
-		(text "reset" (rect 197 1707 424 3424)(font "Arial" (color 0 0 0)))
+		(text "repetition_pow" (rect 107 1643 298 3299)(font "Arial" (color 128 0 0)(font_size 9)))
+		(text "export" (rect 197 1667 430 3344)(font "Arial" (color 0 0 0)))
+		(text "system_pll_ref_clk" (rect 81 1683 270 3379)(font "Arial" (color 128 0 0)(font_size 9)))
+		(text "clk" (rect 197 1707 412 3424)(font "Arial" (color 0 0 0)))
+		(text "system_pll_ref_reset" (rect 67 1723 254 3459)(font "Arial" (color 128 0 0)(font_size 9)))
+		(text "reset" (rect 197 1747 424 3504)(font "Arial" (color 0 0 0)))
 		(text "vga_pio_locked" (rect 401 403 886 819)(font "Arial" (color 128 0 0)(font_size 9)))
 		(text "export" (rect 370 427 776 864)(font "Arial" (color 0 0 0)))
 		(text "vga_pio_outclk0" (rect 401 443 892 899)(font "Arial" (color 128 0 0)(font_size 9)))
 		(text "clk" (rect 385 467 788 944)(font "Arial" (color 0 0 0)))
-		(text "repetition_pow" (rect 107 1723 298 3459)(font "Arial" (color 128 0 0)(font_size 9)))
-		(text "export" (rect 197 1747 430 3504)(font "Arial" (color 0 0 0)))
 		(text " system " (rect 557 1768 1162 3546)(font "Arial" ))
 		(line (pt 192 32)(pt 400 32)(line_width 1))
 		(line (pt 400 32)(pt 400 1768)(line_width 1))
@@ -869,12 +870,12 @@ refer to the applicable agreement for further details.
 		(line (pt 194 1652)(pt 194 1676)(line_width 1))
 		(line (pt 193 1692)(pt 193 1716)(line_width 1))
 		(line (pt 194 1692)(pt 194 1716)(line_width 1))
+		(line (pt 193 1732)(pt 193 1756)(line_width 1))
+		(line (pt 194 1732)(pt 194 1756)(line_width 1))
 		(line (pt 399 412)(pt 399 436)(line_width 1))
 		(line (pt 398 412)(pt 398 436)(line_width 1))
 		(line (pt 399 452)(pt 399 476)(line_width 1))
 		(line (pt 398 452)(pt 398 476)(line_width 1))
-		(line (pt 193 1732)(pt 193 1756)(line_width 1))
-		(line (pt 194 1732)(pt 194 1756)(line_width 1))
 		(line (pt 0 0)(pt 592 0)(line_width 1))
 		(line (pt 592 0)(pt 592 1784)(line_width 1))
 		(line (pt 0 1784)(pt 592 1784)(line_width 1))

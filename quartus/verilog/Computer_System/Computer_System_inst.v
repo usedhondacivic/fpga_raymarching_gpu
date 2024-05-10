@@ -90,10 +90,10 @@
 		.memory_mem_dm                   (<connected-to-memory_mem_dm>),                   //                     .mem_dm
 		.memory_oct_rzqin                (<connected-to-memory_oct_rzqin>),                //                     .oct_rzqin
 		.red_shift_export                (<connected-to-red_shift_export>),                //            red_shift.export
+		.repetition_pow_export           (<connected-to-repetition_pow_export>),           //       repetition_pow.export
 		.system_pll_ref_clk_clk          (<connected-to-system_pll_ref_clk_clk>),          //   system_pll_ref_clk.clk
 		.system_pll_ref_reset_reset      (<connected-to-system_pll_ref_reset_reset>),      // system_pll_ref_reset.reset
 		.vga_pio_locked_export           (<connected-to-vga_pio_locked_export>),           //       vga_pio_locked.export
-		.vga_pio_outclk0_clk             (<connected-to-vga_pio_outclk0_clk>),             //      vga_pio_outclk0.clk
-		.repetition_pow_export           (<connected-to-repetition_pow_export>)            //       repetition_pow.export
+		.vga_pio_outclk0_clk             (<connected-to-vga_pio_outclk0_clk>)              //      vga_pio_outclk0.clk
 	);
 

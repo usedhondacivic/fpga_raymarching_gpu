@@ -1,4 +1,4 @@
-/* Quartus Prime Version 18.1.0 Build 625 09/12/2018 SJ Lite Edition */
+/* Quartus Prime Version 23.1std.0 Build 991 11/28/2023 SC Lite Edition */
 JedecChain;
 	FileRevision(JESD32A);
 	DefaultMfr(6E);
@@ -6,7 +6,7 @@ JedecChain;
 	P ActionCode(Ign)
 		Device PartName(SOCVHPS) MfrSpec(OpMask(0));
 	P ActionCode(Cfg)
-		Device PartName(5CSEMA5F31) Path("C:/Users/mmc323/Documents/fractal_gpu/quartus/verilog/") File("DE1_SoC_Computer.sof") MfrSpec(OpMask(1));
+		Device PartName(5CSEMA5F31) Path("/home/michael/Documents/cornell/advanced-microcontrollers/final_project/quartus/verilog/") File("DE1_SoC_Computer.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 
