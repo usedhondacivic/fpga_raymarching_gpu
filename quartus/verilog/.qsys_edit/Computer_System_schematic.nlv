@@ -6,10 +6,10 @@ preplace inst Computer_System.ARM_A9_HPS.axi_ocram -pg 1
 preplace inst Computer_System.ARM_A9_HPS.clkmgr -pg 1
 preplace inst Computer_System.ARM_A9_HPS.arm_a9_1 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.clk_0 -pg 1
-preplace inst Computer_System.lookat_3_1 -pg 1 -lvl 6 -y 1090
-preplace inst Computer_System.lookat_3_2 -pg 1 -lvl 6 -y 1200
+preplace inst Computer_System.lookat_3_1 -pg 1 -lvl 6 -y 1190
+preplace inst Computer_System.lookat_3_2 -pg 1 -lvl 6 -y 1290
 preplace inst Computer_System.ARM_A9_HPS.wd_timer0 -pg 1
-preplace inst Computer_System.lookat_3_3 -pg 1 -lvl 6 -y 1640
+preplace inst Computer_System.lookat_3_3 -pg 1 -lvl 6 -y 1690
 preplace inst Computer_System.ARM_A9_HPS.hps_io -pg 1
 preplace inst Computer_System.ARM_A9_HPS.wd_timer1 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.f2s_periph_ref_clk -pg 1
@@ -21,33 +21,34 @@ preplace inst Computer_System.ARM_A9_HPS.uart0 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.i2c3 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.uart1 -pg 1
 preplace inst Computer_System.ARM_A9_HPS -pg 1 -lvl 5 -y 100
-preplace inst Computer_System.eye_x -pg 1 -lvl 6 -y 250
+preplace inst Computer_System.eye_x -pg 1 -lvl 6 -y 330
+preplace inst Computer_System.lookat_2_1 -pg 1 -lvl 6 -y 810
 preplace inst Computer_System.ARM_A9_HPS.L2 -pg 1
-preplace inst Computer_System.lookat_2_1 -pg 1 -lvl 6 -y 670
-preplace inst Computer_System.eye_y -pg 1 -lvl 6 -y 1310
-preplace inst Computer_System.lookat_2_2 -pg 1 -lvl 6 -y 870
-preplace inst Computer_System.eye_z -pg 1 -lvl 6 -y 1420
-preplace inst Computer_System.lookat_2_3 -pg 1 -lvl 6 -y 980
+preplace inst Computer_System.eye_y -pg 1 -lvl 6 -y 1390
+preplace inst Computer_System.lookat_2_2 -pg 1 -lvl 6 -y 990
+preplace inst Computer_System.eye_z -pg 1 -lvl 6 -y 1490
+preplace inst Computer_System.lookat_2_3 -pg 1 -lvl 6 -y 1090
 preplace inst Computer_System.System_PLL.reset_from_locked -pg 1
 preplace inst Computer_System.lookat_1_1 -pg 1 -lvl 6 -y 30
 preplace inst Computer_System.ARM_A9_HPS.fpgamgr -pg 1
-preplace inst Computer_System.red_shift -pg 1 -lvl 6 -y 1750
+preplace inst Computer_System.red_shift -pg 1 -lvl 6 -y 1790
 preplace inst Computer_System.ARM_A9_HPS.eosc1 -pg 1
-preplace inst Computer_System.lookat_1_2 -pg 1 -lvl 6 -y 450
+preplace inst Computer_System.lookat_1_2 -pg 1 -lvl 6 -y 610
 preplace inst Computer_System.ARM_A9_HPS.gpio0 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.eosc2 -pg 1
-preplace inst Computer_System.lookat_1_3 -pg 1 -lvl 6 -y 560
+preplace inst Computer_System.lookat_1_3 -pg 1 -lvl 6 -y 710
 preplace inst Computer_System.ARM_A9_HPS.gpio1 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.gpio2 -pg 1
+preplace inst Computer_System.fog_shift -pg 1 -lvl 6 -y 430
 preplace inst Computer_System.System_PLL -pg 1 -lvl 1 -y 2030
 preplace inst Computer_System.ARM_A9_HPS.usb0 -pg 1
-preplace inst Computer_System.blue_shift -pg 1 -lvl 6 -y 140
 preplace inst Computer_System.ARM_A9_HPS.axi_sdram -pg 1
+preplace inst Computer_System.blue_shift -pg 1 -lvl 6 -y 130
 preplace inst Computer_System.ARM_A9_HPS.usb1 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.dcan0 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.dcan1 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.nand0 -pg 1
-preplace inst Computer_System.green_shift -pg 1 -lvl 6 -y 1530
+preplace inst Computer_System.green_shift -pg 1 -lvl 6 -y 1590
 preplace inst Computer_System.ARM_A9_HPS.sdrctl -pg 1
 preplace inst Computer_System.ARM_A9_HPS.spim0 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.rstmgr -pg 1
@@ -55,7 +56,7 @@ preplace inst Computer_System.ARM_A9_HPS.spim1 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.hps_io.border -pg 1
 preplace inst Computer_System.ARM_A9_HPS.l3regs -pg 1
 preplace inst Computer_System.ARM_A9_HPS.scu -pg 1
-preplace inst Computer_System.m10k_pll -pg 1 -lvl 6 -y 780
+preplace inst Computer_System.m10k_pll -pg 1 -lvl 6 -y 910
 preplace inst Computer_System.ARM_A9_HPS.timer -pg 1
 preplace inst Computer_System.ARM_A9_HPS.timer0 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.f2s_sdram_ref_clk -pg 1
@@ -63,40 +64,43 @@ preplace inst Computer_System.ARM_A9_HPS.arm_gic_0 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.timer1 -pg 1
 preplace inst Computer_System.System_PLL.sys_pll -pg 1
 preplace inst Computer_System.ARM_A9_HPS.timer2 -pg 1
+preplace inst Computer_System.color_enables -pg 1 -lvl 6 -y 230
 preplace inst Computer_System.ARM_A9_HPS.sdmmc -pg 1
 preplace inst Computer_System.ARM_A9_HPS.timer3 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.bridges -pg 1
 preplace inst Computer_System.ARM_A9_HPS.gmac0 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.gmac1 -pg 1
 preplace inst Computer_System.ARM_A9_HPS.sysmgr -pg 1
-preplace inst Computer_System.vga_pio -pg 1 -lvl 6 -y 360
+preplace inst Computer_System.vga_pio -pg 1 -lvl 6 -y 530
 preplace inst Computer_System -pg 1 -lvl 1 -y 40 -regml 8 -regy -20
 preplace inst Computer_System.ARM_A9_HPS.dma -pg 1
 preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.system_pll_ref_clk,(SLAVE)System_PLL.ref_clk) 1 0 1 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(MASTER)vga_pio.outclk0,(MASTER)Computer_System.vga_pio_outclk0) 1 6 2 NJ 390 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.eye_z,(SLAVE)eye_z.external_connection) 1 0 6 NJ 1270 NJ 1270 NJ 1270 NJ 1270 NJ 1270 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.red_shift,(SLAVE)red_shift.external_connection) 1 0 6 NJ 1780 NJ 1780 NJ 1780 NJ 1780 NJ 1780 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.lookat_2_2,(SLAVE)lookat_2_2.external_connection) 1 0 6 NJ 900 NJ 900 NJ 900 NJ 900 NJ 900 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.eye_x,(SLAVE)eye_x.external_connection) 1 0 6 NJ 270 NJ 270 NJ 270 NJ 270 NJ 270 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_3_3.external_connection,(SLAVE)Computer_System.lookat_3_3) 1 0 6 NJ 1670 NJ 1670 NJ 1670 NJ 1670 NJ 1670 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_3_2.external_connection,(SLAVE)Computer_System.lookat_3_2) 1 0 6 NJ 1230 NJ 1230 NJ 1230 NJ 1230 NJ 1230 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.lookat_1_3,(SLAVE)lookat_1_3.external_connection) 1 0 6 NJ 330 NJ 330 NJ 330 NJ 330 NJ 330 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_2_1.external_connection,(SLAVE)Computer_System.lookat_2_1) 1 0 6 NJ 700 NJ 700 NJ 700 NJ 700 NJ 700 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)m10k_pll.locked,(SLAVE)Computer_System.m10k_pll_locked) 1 0 6 NJ 790 NJ 790 NJ 790 NJ 790 NJ 790 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)vga_pio.locked,(SLAVE)Computer_System.vga_pio_locked) 1 0 6 NJ 290 NJ 290 NJ 290 NJ 290 NJ 290 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_1_2.external_connection,(SLAVE)Computer_System.lookat_1_2) 1 0 6 NJ 310 NJ 310 NJ 310 NJ 310 NJ 310 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.memory,(SLAVE)ARM_A9_HPS.memory) 1 0 5 NJ 210 NJ 210 NJ 210 NJ 210 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.system_pll_ref_reset,(SLAVE)System_PLL.ref_reset) 1 0 1 NJ
-preplace netloc FAN_OUT<net_container>Computer_System</net_container>(SLAVE)lookat_1_1.clk,(SLAVE)lookat_2_3.clk,(SLAVE)green_shift.clk,(SLAVE)eye_z.clk,(SLAVE)m10k_pll.refclk,(SLAVE)ARM_A9_HPS.f2h_axi_clock,(SLAVE)ARM_A9_HPS.h2f_axi_clock,(SLAVE)lookat_1_2.clk,(SLAVE)lookat_2_2.clk,(SLAVE)lookat_3_1.clk,(SLAVE)eye_y.clk,(SLAVE)vga_pio.refclk,(SLAVE)red_shift.clk,(SLAVE)lookat_2_1.clk,(SLAVE)ARM_A9_HPS.h2f_lw_axi_clock,(SLAVE)eye_x.clk,(SLAVE)lookat_3_2.clk,(SLAVE)blue_shift.clk,(SLAVE)lookat_3_3.clk,(MASTER)System_PLL.sys_clk,(SLAVE)lookat_1_3.clk) 1 1 5 NJ 2080 NJ 2080 NJ 2080 1520 1310 2220
-preplace netloc FAN_OUT<net_container>Computer_System</net_container>(SLAVE)lookat_1_1.s1,(SLAVE)lookat_1_3.s1,(SLAVE)lookat_2_1.s1,(SLAVE)lookat_2_3.s1,(SLAVE)eye_x.s1,(SLAVE)blue_shift.s1,(MASTER)ARM_A9_HPS.h2f_lw_axi_master,(SLAVE)eye_z.s1,(SLAVE)lookat_1_2.s1,(SLAVE)lookat_2_2.s1,(SLAVE)red_shift.s1,(SLAVE)green_shift.s1,(SLAVE)lookat_3_3.s1,(SLAVE)eye_y.s1,(SLAVE)lookat_3_1.s1,(SLAVE)lookat_3_2.s1) 1 5 1 2160
-preplace netloc INTERCONNECT<net_container>Computer_System</net_container>(SLAVE)green_shift.reset,(SLAVE)lookat_1_3.reset,(SLAVE)lookat_1_2.reset,(SLAVE)eye_y.reset,(MASTER)System_PLL.reset_source,(SLAVE)blue_shift.reset,(SLAVE)lookat_2_1.reset,(SLAVE)lookat_2_3.reset,(SLAVE)vga_pio.reset,(SLAVE)lookat_3_2.reset,(SLAVE)lookat_1_1.reset,(SLAVE)red_shift.reset,(SLAVE)eye_z.reset,(SLAVE)lookat_2_2.reset,(SLAVE)eye_x.reset,(SLAVE)lookat_3_1.reset,(SLAVE)m10k_pll.reset,(MASTER)ARM_A9_HPS.h2f_reset,(SLAVE)lookat_3_3.reset) 1 1 5 NJ 2040 NJ 2040 NJ 2040 NJ 2040 2140
-preplace netloc EXPORT<net_container>Computer_System</net_container>(MASTER)Computer_System.m10k_pll_outclk0,(MASTER)m10k_pll.outclk0) 1 6 2 NJ 810 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.hps_io,(SLAVE)ARM_A9_HPS.hps_io) 1 0 5 NJ 160 NJ 160 NJ 160 NJ 160 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_2_3.external_connection,(SLAVE)Computer_System.lookat_2_3) 1 0 6 NJ 920 NJ 920 NJ 920 NJ 920 NJ 920 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_3_1.external_connection,(SLAVE)Computer_System.lookat_3_1) 1 0 6 NJ 1120 NJ 1120 NJ 1120 NJ 1120 NJ 1120 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.green_shift,(SLAVE)green_shift.external_connection) 1 0 6 NJ 1290 NJ 1290 NJ 1290 NJ 1290 NJ 1290 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.lookat_1_1,(SLAVE)lookat_1_1.external_connection) 1 0 6 NJ 40 NJ 40 NJ 40 NJ 40 NJ 40 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(MASTER)Computer_System.vga_pio_outclk0,(MASTER)vga_pio.outclk0) 1 6 2 NJ 560 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.lookat_2_3,(SLAVE)lookat_2_3.external_connection) 1 0 6 NJ 1120 NJ 1120 NJ 1120 NJ 1120 NJ 1120 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.eye_z,(SLAVE)eye_z.external_connection) 1 0 6 NJ 1280 NJ 1280 NJ 1280 NJ 1280 NJ 1280 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.red_shift,(SLAVE)red_shift.external_connection) 1 0 6 NJ 1820 NJ 1820 NJ 1820 NJ 1820 NJ 1820 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)fog_shift.external_connection,(SLAVE)Computer_System.fog_shift) 1 0 6 NJ 300 NJ 300 NJ 300 NJ 300 NJ 300 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_3_3.external_connection,(SLAVE)Computer_System.lookat_3_3) 1 0 6 NJ 1720 NJ 1720 NJ 1720 NJ 1720 NJ 1720 NJ
+preplace netloc FAN_OUT<net_container>Computer_System</net_container>(SLAVE)lookat_1_1.s1,(SLAVE)lookat_3_2.s1,(SLAVE)color_enables.s1,(SLAVE)blue_shift.s1,(SLAVE)eye_x.s1,(SLAVE)lookat_3_1.s1,(SLAVE)lookat_1_2.s1,(SLAVE)lookat_2_3.s1,(SLAVE)lookat_2_2.s1,(SLAVE)lookat_2_1.s1,(MASTER)ARM_A9_HPS.h2f_lw_axi_master,(SLAVE)lookat_1_3.s1,(SLAVE)green_shift.s1,(SLAVE)eye_y.s1,(SLAVE)eye_z.s1,(SLAVE)red_shift.s1,(SLAVE)fog_shift.s1,(SLAVE)lookat_3_3.s1) 1 5 1 2140
+preplace netloc FAN_OUT<net_container>Computer_System</net_container>(SLAVE)lookat_2_3.clk,(SLAVE)color_enables.clk,(SLAVE)lookat_1_1.clk,(SLAVE)lookat_1_3.clk,(SLAVE)eye_x.clk,(SLAVE)vga_pio.refclk,(MASTER)System_PLL.sys_clk,(SLAVE)eye_y.clk,(SLAVE)red_shift.clk,(SLAVE)fog_shift.clk,(SLAVE)m10k_pll.refclk,(SLAVE)green_shift.clk,(SLAVE)ARM_A9_HPS.h2f_lw_axi_clock,(SLAVE)lookat_3_3.clk,(SLAVE)ARM_A9_HPS.h2f_axi_clock,(SLAVE)ARM_A9_HPS.f2h_axi_clock,(SLAVE)eye_z.clk,(SLAVE)lookat_3_1.clk,(SLAVE)blue_shift.clk,(SLAVE)lookat_1_2.clk,(SLAVE)lookat_2_2.clk,(SLAVE)lookat_3_2.clk,(SLAVE)lookat_2_1.clk) 1 1 5 NJ 2080 NJ 2080 NJ 2080 1520 1650 2200
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)System_PLL.ref_reset,(SLAVE)Computer_System.system_pll_ref_reset) 1 0 1 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)eye_x.external_connection,(SLAVE)Computer_System.eye_x) 1 0 6 NJ 280 NJ 280 NJ 280 NJ 280 NJ 280 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.lookat_1_3,(SLAVE)lookat_1_3.external_connection) 1 0 6 NJ 360 NJ 360 NJ 360 NJ 360 NJ 360 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_2_1.external_connection,(SLAVE)Computer_System.lookat_2_1) 1 0 6 NJ 840 NJ 840 NJ 840 NJ 840 NJ 840 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)color_enables.external_connection,(SLAVE)Computer_System.color_enables) 1 0 6 NJ 260 NJ 260 NJ 260 NJ 260 NJ 260 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)m10k_pll.locked,(SLAVE)Computer_System.m10k_pll_locked) 1 0 6 NJ 920 NJ 920 NJ 920 NJ 920 NJ 920 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_1_1.external_connection,(SLAVE)Computer_System.lookat_1_1) 1 0 6 NJ 40 NJ 40 NJ 40 NJ 40 NJ 40 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.lookat_3_2,(SLAVE)lookat_3_2.external_connection) 1 0 6 NJ 1240 NJ 1240 NJ 1240 NJ 1240 NJ 1240 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_1_2.external_connection,(SLAVE)Computer_System.lookat_1_2) 1 0 6 NJ 340 NJ 340 NJ 340 NJ 340 NJ 340 NJ
+preplace netloc INTERCONNECT<net_container>Computer_System</net_container>(SLAVE)eye_y.reset,(SLAVE)blue_shift.reset,(SLAVE)eye_z.reset,(SLAVE)color_enables.reset,(SLAVE)lookat_1_2.reset,(SLAVE)green_shift.reset,(SLAVE)lookat_2_1.reset,(SLAVE)fog_shift.reset,(SLAVE)vga_pio.reset,(SLAVE)lookat_3_1.reset,(SLAVE)lookat_1_1.reset,(SLAVE)lookat_2_3.reset,(SLAVE)lookat_3_2.reset,(SLAVE)lookat_1_3.reset,(SLAVE)eye_x.reset,(SLAVE)red_shift.reset,(MASTER)System_PLL.reset_source,(MASTER)ARM_A9_HPS.h2f_reset,(SLAVE)m10k_pll.reset,(SLAVE)lookat_2_2.reset,(SLAVE)lookat_3_3.reset) 1 1 5 NJ 2040 NJ 2040 NJ 2040 NJ 2040 2240
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)ARM_A9_HPS.memory,(SLAVE)Computer_System.memory) 1 0 5 NJ 210 NJ 210 NJ 210 NJ 210 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_2_2.external_connection,(SLAVE)Computer_System.lookat_2_2) 1 0 6 NJ 1020 NJ 1020 NJ 1020 NJ 1020 NJ 1020 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)ARM_A9_HPS.hps_io,(SLAVE)Computer_System.hps_io) 1 0 5 NJ 150 NJ 150 NJ 150 NJ 150 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(MASTER)Computer_System.m10k_pll_outclk0,(MASTER)m10k_pll.outclk0) 1 6 2 NJ 940 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)green_shift.external_connection,(SLAVE)Computer_System.green_shift) 1 0 6 NJ 1620 NJ 1620 NJ 1620 NJ 1620 NJ 1620 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)lookat_3_1.external_connection,(SLAVE)Computer_System.lookat_3_1) 1 0 6 NJ 1220 NJ 1220 NJ 1220 NJ 1220 NJ 1220 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.vga_pio_locked,(SLAVE)vga_pio.locked) 1 0 6 NJ 320 NJ 320 NJ 320 NJ 320 NJ 320 NJ
 preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.blue_shift,(SLAVE)blue_shift.external_connection) 1 0 6 NJ 60 NJ 60 NJ 60 NJ 60 NJ 60 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.eye_y,(SLAVE)eye_y.external_connection) 1 0 6 NJ 1250 NJ 1250 NJ 1250 NJ 1250 NJ 1250 NJ
-levelinfo -pg 1 0 130 2990
-levelinfo -hier Computer_System 140 210 620 1040 1480 1890 2370 2840 2860
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.eye_y,(SLAVE)eye_y.external_connection) 1 0 6 NJ 1260 NJ 1260 NJ 1260 NJ 1260 NJ 1260 NJ
+levelinfo -pg 1 0 140 3010
+levelinfo -hier Computer_System 150 230 640 1060 1500 1910 2390 2860 2880

@@ -1,8 +1,12 @@
 
 module Computer_System (
+	blue_shift_export,
+	color_enables_export,
 	eye_x_export,
 	eye_y_export,
 	eye_z_export,
+	fog_shift_export,
+	green_shift_export,
 	hps_io_hps_io_emac1_inst_TX_CLK,
 	hps_io_hps_io_emac1_inst_TXD0,
 	hps_io_hps_io_emac1_inst_TXD1,
@@ -86,19 +90,20 @@ module Computer_System (
 	memory_mem_odt,
 	memory_mem_dm,
 	memory_oct_rzqin,
+	red_shift_export,
 	system_pll_ref_clk_clk,
 	system_pll_ref_reset_reset,
 	vga_pio_locked_export,
 	vga_pio_outclk0_clk,
-	red_shift_export,
-	green_shift_export,
-	blue_shift_export,
-	fog_shift_export,
-	color_enables_export);	
+	repetition_pow_export);	
 
+	output	[31:0]	blue_shift_export;
+	output	[31:0]	color_enables_export;
 	output	[31:0]	eye_x_export;
 	output	[31:0]	eye_y_export;
 	output	[31:0]	eye_z_export;
+	output	[31:0]	fog_shift_export;
+	output	[31:0]	green_shift_export;
 	output		hps_io_hps_io_emac1_inst_TX_CLK;
 	output		hps_io_hps_io_emac1_inst_TXD0;
 	output		hps_io_hps_io_emac1_inst_TXD1;
@@ -182,13 +187,10 @@ module Computer_System (
 	output		memory_mem_odt;
 	output	[3:0]	memory_mem_dm;
 	input		memory_oct_rzqin;
+	output	[31:0]	red_shift_export;
 	input		system_pll_ref_clk_clk;
 	input		system_pll_ref_reset_reset;
 	output		vga_pio_locked_export;
 	output		vga_pio_outclk0_clk;
-	output	[31:0]	red_shift_export;
-	output	[31:0]	green_shift_export;
-	output	[31:0]	blue_shift_export;
-	output	[31:0]	fog_shift_export;
-	output	[31:0]	color_enables_export;
+	output	[31:0]	repetition_pow_export;
 endmodule

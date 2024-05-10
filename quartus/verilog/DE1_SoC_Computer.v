@@ -439,11 +439,11 @@ wire [26:0] red_shift_export,
 			green_shift_export,
 			fog_shift_export;
 wire [26:0] color_enables_export;
-
 wire [`COLOR_SIZE] out_color;
+wire [26:0] repetition_pow_export;
 
  raymarcher RM (
- 	.clk(CLOCK_50),
+ 	.clk(M10k_pll),
 	.m10k_clk(M10k_pll),
 	.reset(vga_reset),
  	.look_at_1_1(lookat_1_1_export[26:0]),
@@ -468,6 +468,7 @@ wire [`COLOR_SIZE] out_color;
 	.green_enable(color_enables_export[1]),
 	.blue_enable(color_enables_export[2]),
 	.fog_enable(color_enables_export[3]),
+    .repetition_pow(repetition_pow_export),
 	.o_color(out_color)
  );
 
@@ -688,6 +689,7 @@ Computer_System The_System (
 	.blue_shift_export(blue_shift_export),
 	.fog_shift_export(fog_shift_export),
 	.color_enables_export(color_enables_export),
+	.repetition_pow_export(repetition_pow_export)
 );
 endmodule // end top level
 

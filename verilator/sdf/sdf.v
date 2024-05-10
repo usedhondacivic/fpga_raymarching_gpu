@@ -3,9 +3,7 @@
 `define TWO 27'h2000000
 `define NEG_TWO 27'h6000000
 
-module sdf #(
-    // parameter NUM_STAGES = 15
-) (
+module sdf(
     input clk,
     input [26:0] point_x,
     input [26:0] point_y,
