@@ -1,5 +1,8 @@
 
 module Computer_System (
+	eye_x_export,
+	eye_y_export,
+	eye_z_export,
 	hps_io_hps_io_emac1_inst_TX_CLK,
 	hps_io_hps_io_emac1_inst_TXD0,
 	hps_io_hps_io_emac1_inst_TXD1,
@@ -87,10 +90,15 @@ module Computer_System (
 	system_pll_ref_reset_reset,
 	vga_pio_locked_export,
 	vga_pio_outclk0_clk,
-	eye_x_export,
-	eye_y_export,
-	eye_z_export);	
+	red_shift_export,
+	green_shift_export,
+	blue_shift_export,
+	fog_shift_export,
+	color_enables_export);	
 
+	output	[31:0]	eye_x_export;
+	output	[31:0]	eye_y_export;
+	output	[31:0]	eye_z_export;
 	output		hps_io_hps_io_emac1_inst_TX_CLK;
 	output		hps_io_hps_io_emac1_inst_TXD0;
 	output		hps_io_hps_io_emac1_inst_TXD1;
@@ -178,7 +186,9 @@ module Computer_System (
 	input		system_pll_ref_reset_reset;
 	output		vga_pio_locked_export;
 	output		vga_pio_outclk0_clk;
-	output	[31:0]	eye_x_export;
-	output	[31:0]	eye_y_export;
-	output	[31:0]	eye_z_export;
+	output	[31:0]	red_shift_export;
+	output	[31:0]	green_shift_export;
+	output	[31:0]	blue_shift_export;
+	output	[31:0]	fog_shift_export;
+	output	[31:0]	color_enables_export;
 endmodule

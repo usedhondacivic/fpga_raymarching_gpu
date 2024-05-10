@@ -1,5 +1,5 @@
 ///////////////////////////////////////
-// gcc main.c -o raymarcher -lm
+// g++ main.c -o raymarcher -lm
 ///////////////////////////////////////
 
 #include <stdio.h>
@@ -13,6 +13,8 @@
 #include <math.h>
 
 #include <time.h>
+
+#include "noise.h"
 
 void delay(int milli_seconds)
 {
@@ -41,16 +43,22 @@ void delay(int milli_seconds)
 #define EYE_X_ADDR 0x90
 #define EYE_Y_ADDR 0x100
 #define EYE_Z_ADDR 0x110
+#define RED_SHIFT 0x120
+#define GREEN_SHIFT 0x130
+#define BLUE_SHIFT 0x140
+#define FOG_SHIFT 0x150
+#define COLOR_ENABLES 0x160
 
 volatile unsigned int *lookat_1_1, *lookat_1_2, *lookat_1_3;
 volatile unsigned int *lookat_2_1, *lookat_2_2, *lookat_2_3;
 volatile unsigned int *lookat_3_1, *lookat_3_2, *lookat_3_3;
 volatile unsigned int *eye_x, *eye_y, *eye_z;
+volatile unsigned int *red_shift, *green_shift, *blue_shift, *fog_shift;
+volatile unsigned int *color_enables;
 
-void set_uniforms(vec3 eye)
+vec3 up = { 0.0, 1.0, 0.0 };
+void set_uniforms(vec3 eye, vec3 target)
 {
-	vec3 target = { 0.0, 0.0, 0.0 };
-	vec3 up = { 0.0, 1.0, 0.0 };
 
 	*eye_x = floatToReg27(eye[0]);
 	*eye_y = floatToReg27(eye[1]);
@@ -59,7 +67,7 @@ void set_uniforms(vec3 eye)
 	vec3 neg_eye;
 	vec3_scale(neg_eye, eye, -1.0);
 	vec3 target_minus_eye;
-	vec3_sub(target_minus_eye, target, neg_eye);
+	vec3_add(target_minus_eye, target, neg_eye);
 	vec3 z_axis;
 	vec3_norm(z_axis, target_minus_eye);
 	vec3 z_cross_up;
@@ -80,6 +88,54 @@ void set_uniforms(vec3 eye)
 	*lookat_1_3 = floatToReg27(z_axis[0]);
 	*lookat_2_3 = floatToReg27(z_axis[1]);
 	*lookat_3_3 = floatToReg27(z_axis[2]);
+}
+
+int frame_count=0;
+vec3 eye = { -5.0, -5.0, -5.0 };
+vec3 target = { -4.0, -5.0, -5.0 };
+float yaw, pitch, roll;
+
+// Create and configure noise state
+OSN::Noise<2> noise;
+vec3 velocity = {1.0, 0.0, 0.0};
+void fly_random(float move_speed, float turn_speed, float rate_of_change){
+	float counter = frame_count * rate_of_change + 2000.0;
+	vec3 main_axis;
+	vec3_dup(main_axis, up);
+	vec3 cross_axis;
+	vec3_mul_cross(cross_axis, velocity, up);		
+	vec3_norm(cross_axis, cross_axis);
+	vec3_norm(main_axis, main_axis);
+	vec3_scale(cross_axis, cross_axis, noise.eval(counter, counter) * turn_speed);
+	vec3_scale(main_axis, main_axis, noise.eval((float)(counter+200.0), counter) * turn_speed);
+	vec3_add(velocity, velocity, cross_axis);
+	vec3_add(velocity, velocity, main_axis);
+	vec3_norm(velocity, velocity);
+	if(velocity[1] >  0.75 )
+		velocity[1] = 0.75;
+	if(velocity[1] <  -0.75 )
+		velocity[1] = -0.75;
+	vec3_scale(velocity, velocity, move_speed);
+	vec3_add(target, target, velocity);	
+	// printf("target: x: %f, y: %f, z: %f\n", target[0], target[1], target[2]);
+	// printf("eye: x: %f, y: %f, z: %f\n", eye[0], eye[1], eye[2]);
+	vec3_norm(velocity, velocity);
+	vec3_scale(velocity, velocity, 2.0);
+	// printf("vel: x: %f, y: %f, z: %f\n", velocity[0], velocity[1], velocity[2]);
+	vec3_add(eye, target, velocity);
+	set_uniforms(eye, target);
+};
+
+void orbit(float distance, float sway){
+	target[0] = 0.0;
+	target[1] = 0.0;
+	target[2] = 0.0;
+	eye[0] = cos(frame_count * (M_PI / 225.0));
+	eye[1] = sin(frame_count * (M_PI / 300.0));
+	eye[2] = sin(frame_count * (M_PI / 150.0) + 1.0);
+	vec3_norm(eye, eye);
+	vec3_scale(eye, eye, sway * sin(frame_count * (M_PI / 350.0) + 1.7) + distance);
+	set_uniforms(eye, target);
 }
 
 int main(void)
@@ -116,18 +172,28 @@ int main(void)
 	eye_y=(unsigned int *)(h2p_lw_virtual_base + (( EYE_Y_ADDR ) & ( HW_REGS_MASK ) ));
 	eye_z=(unsigned int *)(h2p_lw_virtual_base + (( EYE_Z_ADDR ) & ( HW_REGS_MASK ) ));
     
-	vec3 eye = { -5.0, -5.0, -5.0 };
-    int frame_count=0;
+	red_shift=(unsigned int *)(h2p_lw_virtual_base + (( RED_SHIFT ) & ( HW_REGS_MASK ) ));
+	green_shift=(unsigned int *)(h2p_lw_virtual_base + (( GREEN_SHIFT ) & ( HW_REGS_MASK ) ));
+	blue_shift=(unsigned int *)(h2p_lw_virtual_base + (( BLUE_SHIFT ) & ( HW_REGS_MASK ) ));
+	fog_shift=(unsigned int *)(h2p_lw_virtual_base + (( FOG_SHIFT ) & ( HW_REGS_MASK ) ));
+
+	color_enables=(unsigned int *)(h2p_lw_virtual_base + (( COLOR_ENABLES ) & ( HW_REGS_MASK ) ));
+
+	*red_shift = 4;
+	*color_enables[0] = 1;
+	*green_shift = 0;
+	*color_enables[1] = 0;
+	*blue_shift = 5;
+	*color_enables[2] = 1;
+	*fog_shift = 2;
+	*color_enables[3] = 1;
+
     while(1){
-        eye[0] = cos(frame_count * (M_PI / 225.0));
-        eye[1] = sin(frame_count * (M_PI / 300.0));
-        eye[2] = sin(frame_count * (M_PI / 150.0) + 1.0);
-        vec3_norm(eye, eye);
-        vec3_scale(eye, eye, 7.0);
-        set_uniforms(eye);
+		// orbit(20.0, 4.0);
+		// set_uniforms(eye, target);
+		fly_random(0.5, 0.01, 0.001);
         frame_count++;
-        // printf("Write \n");
-        delay(10);
+        delay(20);
     }
     return 0;
 }

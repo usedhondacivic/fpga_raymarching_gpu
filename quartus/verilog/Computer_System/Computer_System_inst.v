@@ -1,4 +1,7 @@
 	Computer_System u0 (
+		.eye_x_export                    (<connected-to-eye_x_export>),                    //                eye_x.export
+		.eye_y_export                    (<connected-to-eye_y_export>),                    //                eye_y.export
+		.eye_z_export                    (<connected-to-eye_z_export>),                    //                eye_z.export
 		.hps_io_hps_io_emac1_inst_TX_CLK (<connected-to-hps_io_hps_io_emac1_inst_TX_CLK>), //               hps_io.hps_io_emac1_inst_TX_CLK
 		.hps_io_hps_io_emac1_inst_TXD0   (<connected-to-hps_io_hps_io_emac1_inst_TXD0>),   //                     .hps_io_emac1_inst_TXD0
 		.hps_io_hps_io_emac1_inst_TXD1   (<connected-to-hps_io_hps_io_emac1_inst_TXD1>),   //                     .hps_io_emac1_inst_TXD1
@@ -86,8 +89,10 @@
 		.system_pll_ref_reset_reset      (<connected-to-system_pll_ref_reset_reset>),      // system_pll_ref_reset.reset
 		.vga_pio_locked_export           (<connected-to-vga_pio_locked_export>),           //       vga_pio_locked.export
 		.vga_pio_outclk0_clk             (<connected-to-vga_pio_outclk0_clk>),             //      vga_pio_outclk0.clk
-		.eye_x_export                    (<connected-to-eye_x_export>),                    //                eye_x.export
-		.eye_y_export                    (<connected-to-eye_y_export>),                    //                eye_y.export
-		.eye_z_export                    (<connected-to-eye_z_export>)                     //                eye_z.export
+		.red_shift_export                (<connected-to-red_shift_export>),                //            red_shift.export
+		.green_shift_export              (<connected-to-green_shift_export>),              //          green_shift.export
+		.blue_shift_export               (<connected-to-blue_shift_export>),               //           blue_shift.export
+		.fog_shift_export                (<connected-to-fog_shift_export>),                //            fog_shift.export
+		.color_enables_export            (<connected-to-color_enables_export>)             //        color_enables.export
 	);
 

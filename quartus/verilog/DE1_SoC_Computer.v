@@ -434,6 +434,11 @@ wire [26:0] lookat_1_1_export,
 wire [26:0] eye_x_export, 
 			eye_y_export,
 			eye_z_export;
+wire [26:0] red_shift_export,
+			blue_shift_export,
+			green_shift_export,
+			fog_shift_export;
+wire [26:0] color_enables_export;
 
 wire [`COLOR_SIZE] out_color;
 
@@ -455,6 +460,14 @@ wire [`COLOR_SIZE] out_color;
  	.eye_z(eye_z_export[26:0]),
 	.read_pixel_x(next_x),
 	.read_pixel_y(next_y),
+	.red_shift(red_shift_export[3:0]),
+	.green_shift(green_shift_export[3:0]),
+	.blue_shift(blue_shift_export[3:0]),
+	.fog_shift(fog_shift_export[3:0]),
+	.red_enable(color_enables_export[0]),
+	.green_enable(color_enables_export[1]),
+	.blue_enable(color_enables_export[2]),
+	.fog_enable(color_enables_export[3]),
 	.o_color(out_color)
  );
 
@@ -668,7 +681,13 @@ Computer_System The_System (
 	
 	.eye_x_export(eye_x_export),
 	.eye_y_export(eye_y_export),
-	.eye_z_export(eye_z_export)
+	.eye_z_export(eye_z_export),
+
+	.red_shift_export(red_shift_export),
+	.green_shift_export(green_shift_export),
+	.blue_shift_export(blue_shift_export),
+	.fog_shift_export(fog_shift_export),
+	.color_enables_export(color_enables_export),
 );
 endmodule // end top level
 
