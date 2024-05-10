@@ -1,4 +1,4 @@
-`define COLOR_SIZE 15:0
+`define COLOR_SIZE 9:0
 
 module DE1_SoC_Computer (
 	////////////////////////////////////
