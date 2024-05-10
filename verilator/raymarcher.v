@@ -193,7 +193,7 @@ module frag_to_world_vector (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 9
+    parameter SDF_STAGES = 13
 ) (
     input clk,
     input [3:0] repetition_pow,
@@ -290,7 +290,7 @@ module ray_stage #(
         o_max_depth <= max_depth;
         o_hit <= hit_pipe[2];
         hit_pipe[2] <= hit_pipe[1];
-        hit_pipe[1] <= distance[26] ? 1 : eps_compare;
+        hit_pipe[1] <= eps_compare;
         o_point_x <= hit_pipe[2] | max_depth ? point_x_pipe[SDF_STAGES+2] : new_point_x;
         o_point_y <= hit_pipe[2] | max_depth ? point_y_pipe[SDF_STAGES+2] : new_point_y;
         o_point_z <= hit_pipe[2] | max_depth ? point_z_pipe[SDF_STAGES+2] : new_point_z;
@@ -349,7 +349,7 @@ rayInfo raymarch() {
 }
 */
 module raymarcher #(
-    parameter ITR_PER_LOOP = 3,
+    parameter ITR_PER_LOOP = 4,
     parameter FRAG_DIR_PIPELINE_CYCLES = 8,
     parameter PIPELINE_ARR_SIZE = ITR_PER_LOOP + FRAG_DIR_PIPELINE_CYCLES
 ) (
