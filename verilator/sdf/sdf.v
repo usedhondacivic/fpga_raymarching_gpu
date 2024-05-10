@@ -15,7 +15,8 @@ module sdf(
     /* verilator lint_off UNUSEDSIGNAL */
     // wire [26:0] cube_dist, sphere_dist, cross_dist, diff_dist;
     // wire [26:0] cube_dist, cross_dist;
-    wire [26:0] cube_dist, cross_dist, tetra_dist;
+    // wire [26:0] cube_dist, cross_dist, tetra_dist;
+    wire [26:0] cross_dist, tetra_dist;
     wire [26:0] q_x, q_y, q_z;
     VEC_mod_pow_two MOD (
         .i_clk  (clk),
@@ -66,16 +67,16 @@ module sdf(
     //     .o_add_z(a_z)
     // );
 
-    box BOX (
-        .clk(clk),
-        .point_x(a_x),
-        .point_y(a_y),
-        .point_z(a_z),
-        .dim_x(27'h1f26666),
-        .dim_y(27'h1f26666),
-        .dim_z(27'h1f26666),
-        .distance(cube_dist)
-    );
+    // box BOX (
+    //     .clk(clk),
+    //     .point_x(a_x),
+    //     .point_y(a_y),
+    //     .point_z(a_z),
+    //     .dim_x(27'h1f26666),
+    //     .dim_y(27'h1f26666),
+    //     .dim_z(27'h1f26666),
+    //     .distance(cube_dist)
+    // );
     // sphere BALL (
     //     .clk(clk),
     //     .point_x(point_x),

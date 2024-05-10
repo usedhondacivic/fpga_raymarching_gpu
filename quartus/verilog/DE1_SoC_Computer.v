@@ -443,7 +443,7 @@ wire [`COLOR_SIZE] out_color;
 wire [26:0] repetition_pow_export;
 
  raymarcher RM (
- 	.clk(M10k_pll),
+ 	.clk(CLOCK_50),
 	.m10k_clk(M10k_pll),
 	.reset(vga_reset),
  	.look_at_1_1(lookat_1_1_export[26:0]),
