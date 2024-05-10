@@ -17,7 +17,7 @@ module sdf #(
     /* verilator lint_off UNUSEDSIGNAL */
     // wire [26:0] cube_dist, sphere_dist, cross_dist, diff_dist;
     // wire [26:0] cube_dist, cross_dist;
-    wire [26:0] cube_dist, cross_dist;
+    wire [26:0] cube_dist, cross_dist, tetra_dist;
     wire [26:0] q_x, q_y, q_z;
     VEC_mod_pow_two MOD (
         .i_clk  (clk),
@@ -105,21 +105,21 @@ module sdf #(
     // );
     sdf_union #(
         .SDF_A_PIPELINE_CYCLES(1),
-        .SDF_B_PIPELINE_CYCLES(13)
+        .SDF_B_PIPELINE_CYCLES(7)
     ) UNION (
         .clk(clk),
         .i_dist_a(cross_dist),
-        .i_dist_b(cube_dist),
+        .i_dist_b(tetra_dist),
         .o_dist(distance)
     );
 
-    // tetrahedron TETRA (
-    //     .clk(clk),
-    //     .point_x(point_x),
-    //     .point_y(point_y),
-    //     .point_z(point_z),
-    //     .distance(distance)
-    // );
+    tetrahedron TETRA (
+        .clk(clk),
+        .point_x(a_x),
+        .point_y(a_y),
+        .point_z(a_z),
+        .distance(tetra_dist)
+    );
 
 
     // menger MENG (

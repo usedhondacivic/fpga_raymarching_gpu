@@ -193,7 +193,7 @@ module frag_to_world_vector (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 15
+    parameter SDF_STAGES = 9
 ) (
     input clk,
     input [3:0] repetition_pow,
