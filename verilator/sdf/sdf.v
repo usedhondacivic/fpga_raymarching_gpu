@@ -3,22 +3,28 @@
 `define TWO 27'h2000000
 `define NEG_TWO 27'h6000000
 
-module sdf (
+module sdf #(
+    // parameter NUM_STAGES = 15
+) (
     input clk,
     input [26:0] point_x,
     input [26:0] point_y,
     input [26:0] point_z,
+    input [3:0] repetition_pow,
     output [26:0] distance
 );
+
+    /* verilator lint_off UNUSEDSIGNAL */
     // wire [26:0] cube_dist, sphere_dist, cross_dist, diff_dist;
     // wire [26:0] cube_dist, cross_dist;
-    // wire [26:0] cube_dist, cross_dist;
+    wire [26:0] cube_dist, cross_dist;
     wire [26:0] q_x, q_y, q_z;
-    VEC_mod_two MOD (
+    VEC_mod_pow_two MOD (
         .i_clk  (clk),
         .i_a_x  (point_x),
         .i_a_y  (point_y),
         .i_a_z  (point_z),
+        .i_pow  (repetition_pow),
         .o_mod_x(q_x),
         .o_mod_y(q_y),
         .o_mod_z(q_z)
@@ -62,16 +68,16 @@ module sdf (
     //     .o_add_z(a_z)
     // );
 
-    // box BOX (
-    //     .clk(clk),
-    //     .point_x(a_x),
-    //     .point_y(a_y),
-    //     .point_z(a_z),
-    //     .dim_x(27'h1fc0000),
-    //     .dim_y(27'h1fc0000),
-    //     .dim_z(27'h1fc0000),
-    //     .distance(cube_dist)
-    // );
+    box BOX (
+        .clk(clk),
+        .point_x(a_x),
+        .point_y(a_y),
+        .point_z(a_z),
+        .dim_x(27'h1f26666),
+        .dim_y(27'h1f26666),
+        .dim_z(27'h1f26666),
+        .distance(cube_dist)
+    );
     // sphere BALL (
     //     .clk(clk),
     //     .point_x(point_x),
@@ -82,11 +88,11 @@ module sdf (
     // );
     inf_cross CROSS (
         .clk(clk),
-        .point_x(a_x),
-        .point_y(a_y),
-        .point_z(a_z),
-        .size(27'h5ee6666),
-        .distance(distance)
+        .point_x(q_x),
+        .point_y(q_y),
+        .point_z(q_z),
+        .size(27'h5f80000),
+        .distance(cross_dist)
     );
     // sdf_difference #(
     //     .SDF_A_PIPELINE_CYCLES(9),
@@ -97,15 +103,15 @@ module sdf (
     //     .i_dist_b(cube_dist),
     //     .o_dist(diff_dist)
     // );
-    // sdf_union #(
-    //     .SDF_A_PIPELINE_CYCLES(1),
-    //     .SDF_B_PIPELINE_CYCLES(11)
-    // ) UNION (
-    //     .clk(clk),
-    //     .i_dist_a(cross_dist),
-    //     .i_dist_b(cube_dist),
-    //     .o_dist(distance)
-    // );
+    sdf_union #(
+        .SDF_A_PIPELINE_CYCLES(1),
+        .SDF_B_PIPELINE_CYCLES(13)
+    ) UNION (
+        .clk(clk),
+        .i_dist_a(cross_dist),
+        .i_dist_b(cube_dist),
+        .o_dist(distance)
+    );
 
     // tetrahedron TETRA (
     //     .clk(clk),
@@ -123,5 +129,5 @@ module sdf (
     //     .point_z(point_z),
     //     .distance(distance)
     // );
-
+    /* verilator lint_on UNUSEDSIGNAL */
 endmodule

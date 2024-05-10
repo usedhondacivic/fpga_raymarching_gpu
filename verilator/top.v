@@ -72,6 +72,7 @@ module top (
         .green_enable(1),
         .blue_enable(1),
         .fog_enable(1),
+        .repetition_pow(1),
         .o_color(output_color)
     );
 

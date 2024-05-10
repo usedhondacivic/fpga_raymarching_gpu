@@ -193,9 +193,10 @@ module frag_to_world_vector (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 5
+    parameter SDF_STAGES = 15
 ) (
     input clk,
+    input [3:0] repetition_pow,
     input [`CORDW-1:0] pixel_x,
     input [`CORDW-1:0] pixel_y,
     input [26:0] point_x,
@@ -237,6 +238,7 @@ module ray_stage #(
         .point_x(point_x),
         .point_y(point_y),
         .point_z(point_z),
+        .repetition_pow(repetition_pow),
         .distance(distance)
     );
 
@@ -354,8 +356,8 @@ module raymarcher #(
     input                    clk,
     input                    m10k_clk,
     input                    reset,
-    input      [       26:0] look_at_1_1,   // Look at matrix, calculated on the HPS
-    input      [       26:0] look_at_1_2,   // https://lygia.xyz/space/lookAt
+    input      [       26:0] look_at_1_1,     // Look at matrix, calculated on the HPS
+    input      [       26:0] look_at_1_2,     // https://lygia.xyz/space/lookAt
     input      [       26:0] look_at_1_3,
     input      [       26:0] look_at_2_1,
     input      [       26:0] look_at_2_2,
@@ -376,6 +378,7 @@ module raymarcher #(
     input                    green_enable,
     input                    blue_enable,
     input                    fog_enable,
+    input      [        3:0] repetition_pow,
     output reg [`COLOR_SIZE] o_color
 );
     reg [`CORDW-1:0] x, y;
@@ -470,6 +473,7 @@ module raymarcher #(
             ray_stage its_not_a_stage_mom (
                 .clk(clk),
                 .pixel_x(pixel_x[n+FRAG_DIR_PIPELINE_CYCLES]),
+                .repetition_pow(repetition_pow),
                 .pixel_y(pixel_y[n+FRAG_DIR_PIPELINE_CYCLES]),
                 .point_x(point_x[n+FRAG_DIR_PIPELINE_CYCLES]),
                 .point_y(point_y[n+FRAG_DIR_PIPELINE_CYCLES]),

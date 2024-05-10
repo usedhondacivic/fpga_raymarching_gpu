@@ -10,13 +10,16 @@ function static [7:0] get_exp_diff([26:0] num, [7:0] exp);
 endfunction
 
 // https://stackoverflow.com/questions/49139283/are-there-any-numbers-that-enable-fast-modulo-calculation-on-floats
-module FP_mod_two (
+module FP_mod_pow_two (
     input i_clk,
     input [26:0] i_num,
-    output [26:0] o_num_mod_two
+    input [3:0] i_pow,
+    output [26:0] o_num_mod_pow_two
 );
     wire [26:0] rounded_div;
-    wire [ 7:0] shift_amount = (8'd18 - get_exp_diff(i_num, 8'd1));
+    /* verilator lint_off WIDTHEXPAND */
+    wire [ 7:0] shift_amount = (8'd18 - get_exp_diff(i_num, i_pow));
+    /* verilator lint_on WIDTHEXPAND */
     // Clear the low bits corresponding to < 2, ie round to the nearest 2
     assign rounded_div = shift_amount <= 0 ? i_num :
 						 shift_amount >= 18 ? 0 :
@@ -26,7 +29,7 @@ module FP_mod_two (
         .iCLK(i_clk),
         .iA  (i_num),
         .iB  ({~rounded_div[26], rounded_div[25:0]}),
-        .oSum(o_num_mod_two)
+        .oSum(o_num_mod_pow_two)
     );
 endmodule
 
@@ -94,29 +97,33 @@ module VEC_add (
     );
 endmodule
 
-module VEC_mod_two (
+module VEC_mod_pow_two (
     input i_clk,
     input [26:0] i_a_x,
     input [26:0] i_a_y,
     input [26:0] i_a_z,
+    input [3:0] i_pow,
     output [26:0] o_mod_x,
     output [26:0] o_mod_y,
     output [26:0] o_mod_z
 );
-    FP_mod_two x_mod (
+    FP_mod_pow_two x_mod (
         .i_clk(i_clk),
         .i_num(i_a_x),
-        .o_num_mod_two(o_mod_x)
+        .i_pow(i_pow),
+        .o_num_mod_pow_two(o_mod_x)
     );
-    FP_mod_two y_mod (
+    FP_mod_pow_two y_mod (
         .i_clk(i_clk),
         .i_num(i_a_y),
-        .o_num_mod_two(o_mod_y)
+        .i_pow(i_pow),
+        .o_num_mod_pow_two(o_mod_y)
     );
-    FP_mod_two z_mod (
+    FP_mod_pow_two z_mod (
         .i_clk(i_clk),
         .i_num(i_a_z),
-        .o_num_mod_two(o_mod_z)
+        .i_pow(i_pow),
+        .o_num_mod_pow_two(o_mod_z)
     );
 endmodule
 
