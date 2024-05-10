@@ -16,6 +16,19 @@ module sdf (
         .o_mod_y(q_y),
         .o_mod_z(q_z)
     );
+    wire [26:0] a_x, a_y, a_z;
+    VEC_add ADD (
+        .i_clk  (clk),
+        .i_a_x  (q_x),
+        .i_a_y  (q_y),
+        .i_a_z  (q_z),
+        .i_b_x  (~q_x[26] ? 27'h5fc0000 : 27'h1fc0000),
+        .i_b_y  (~q_y[26] ? 27'h5fc0000 : 27'h1fc0000),
+        .i_b_z  (~q_z[26] ? 27'h5fc0000 : 27'h1fc0000),
+        .o_add_x(a_x),
+        .o_add_y(a_y),
+        .o_add_z(a_z)
+    );
 
     // box BOX (
     //     .clk(clk),
@@ -29,10 +42,10 @@ module sdf (
     // );
     sphere BALL (
         .clk(clk),
-        .point_x(q_x),
-        .point_y(q_y),
-        .point_z(q_z),
-        .radius(27'h1fd3333),
+        .point_x(a_x),
+        .point_y(a_y),
+        .point_z(a_z),
+        .radius(27'h1f80000),
         .distance(distance)
     );
     // inf_cross CROSS (
