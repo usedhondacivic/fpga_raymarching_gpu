@@ -88,6 +88,7 @@ module distance_to_color (
 						 fog_distance_int[7:0] < blue ? blue - fog_distance_int[7:0] :
 						 0;
     assign o_color = {final_red[7:5], final_green[7:4], final_blue[7:5]};
+    // assign o_color = hit ? 10'd1023 : 0;
 endmodule
 
 /*
@@ -192,7 +193,7 @@ module frag_to_world_vector (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 13
+    parameter SDF_STAGES = 5
 ) (
     input clk,
     input [`CORDW-1:0] pixel_x,

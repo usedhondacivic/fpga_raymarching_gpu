@@ -16,7 +16,7 @@ module FP_mod_two (
     output [26:0] o_num_mod_two
 );
     wire [26:0] rounded_div;
-    wire [ 7:0] shift_amount = (8'd18 - get_exp_diff(i_num, 8'd2));
+    wire [ 7:0] shift_amount = (8'd18 - get_exp_diff(i_num, 8'd1));
     // Clear the low bits corresponding to < 2, ie round to the nearest 2
     assign rounded_div = shift_amount <= 0 ? i_num :
 						 shift_amount >= 18 ? 0 :

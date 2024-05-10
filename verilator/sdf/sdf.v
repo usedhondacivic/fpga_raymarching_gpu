@@ -1,3 +1,8 @@
+`define ONE 27'h1fc0000
+`define NEG_ONE 27'h5fc0000
+`define TWO 27'h2000000
+`define NEG_TWO 27'h6000000
+
 module sdf (
     input clk,
     input [26:0] point_x,
@@ -6,6 +11,8 @@ module sdf (
     output [26:0] distance
 );
     // wire [26:0] cube_dist, sphere_dist, cross_dist, diff_dist;
+    // wire [26:0] cube_dist, cross_dist;
+    // wire [26:0] cube_dist, cross_dist;
     wire [26:0] q_x, q_y, q_z;
     VEC_mod_two MOD (
         .i_clk  (clk),
@@ -17,45 +24,70 @@ module sdf (
         .o_mod_z(q_z)
     );
     wire [26:0] a_x, a_y, a_z;
-    VEC_add ADD (
+    VEC_add ADD_A (
         .i_clk  (clk),
         .i_a_x  (q_x),
         .i_a_y  (q_y),
         .i_a_z  (q_z),
-        .i_b_x  (~q_x[26] ? 27'h5fc0000 : 27'h1fc0000),
-        .i_b_y  (~q_y[26] ? 27'h5fc0000 : 27'h1fc0000),
-        .i_b_z  (~q_z[26] ? 27'h5fc0000 : 27'h1fc0000),
+        .i_b_x  (~q_x[26] ? `NEG_TWO : `TWO),
+        .i_b_y  (~q_y[26] ? `NEG_TWO : `TWO),
+        .i_b_z  (~q_z[26] ? `NEG_TWO : `TWO),
         .o_add_x(a_x),
         .o_add_y(a_y),
         .o_add_z(a_z)
     );
+    // wire [26:0] b_x, b_y, b_z;
+    // VEC_add ADD_B (
+    //     .i_clk  (clk),
+    //     .i_a_x  (q_x),
+    //     .i_a_y  (q_y),
+    //     .i_a_z  (q_z),
+    //     .i_b_x  (~q_x[26] ? `ONE : `NEG_ONE),
+    //     .i_b_y  (~q_y[26] ? `ONE : `NEG_ONE),
+    //     .i_b_z  (~q_z[26] ? `ONE : `NEG_ONE),
+    //     .o_add_x(b_x),
+    //     .o_add_y(b_y),
+    //     .o_add_z(b_z)
+    // );
+    // VEC_add ADD (
+    //     .i_clk  (clk),
+    //     .i_a_x  (q_x),
+    //     .i_a_y  (q_y),
+    //     .i_a_z  (q_z),
+    //     .i_b_x  (~q_x[26] ? 27'h5fc0000 : 27'h1fc0000),
+    //     .i_b_y  (~q_y[26] ? 27'h5fc0000 : 27'h1fc0000),
+    //     .i_b_z  (~q_z[26] ? 27'h5fc0000 : 27'h1fc0000),
+    //     .o_add_x(a_x),
+    //     .o_add_y(a_y),
+    //     .o_add_z(a_z)
+    // );
 
     // box BOX (
     //     .clk(clk),
-    //     .point_x(q_x),
-    //     .point_y(q_y),
-    //     .point_z(q_z),
+    //     .point_x(a_x),
+    //     .point_y(a_y),
+    //     .point_z(a_z),
     //     .dim_x(27'h1fc0000),
     //     .dim_y(27'h1fc0000),
     //     .dim_z(27'h1fc0000),
     //     .distance(cube_dist)
     // );
-    sphere BALL (
+    // sphere BALL (
+    //     .clk(clk),
+    //     .point_x(point_x),
+    //     .point_y(point_y),
+    //     .point_z(point_z),
+    //     .radius(`ONE),
+    //     .distance(distance)
+    // );
+    inf_cross CROSS (
         .clk(clk),
         .point_x(a_x),
         .point_y(a_y),
         .point_z(a_z),
-        .radius(27'h1f80000),
+        .size(27'h5ee6666),
         .distance(distance)
     );
-    // inf_cross CROSS (
-    //     .clk(clk),
-    //     .point_x(q_x),
-    //     .point_y(q_y),
-    //     .point_z(q_z),
-    //     .size(27'h5ee6666),
-    //     .distance(cross_dist)
-    // );
     // sdf_difference #(
     //     .SDF_A_PIPELINE_CYCLES(9),
     //     .SDF_B_PIPELINE_CYCLES(11)
@@ -66,12 +98,12 @@ module sdf (
     //     .o_dist(diff_dist)
     // );
     // sdf_union #(
-    //     .SDF_A_PIPELINE_CYCLES(11),
-    //     .SDF_B_PIPELINE_CYCLES(1)
+    //     .SDF_A_PIPELINE_CYCLES(1),
+    //     .SDF_B_PIPELINE_CYCLES(11)
     // ) UNION (
     //     .clk(clk),
-    //     .i_dist_a(diff_dist),
-    //     .i_dist_b(cross_dist),
+    //     .i_dist_a(cross_dist),
+    //     .i_dist_b(cube_dist),
     //     .o_dist(distance)
     // );
 
@@ -91,6 +123,5 @@ module sdf (
     //     .point_z(point_z),
     //     .distance(distance)
     // );
-
 
 endmodule
