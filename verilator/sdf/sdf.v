@@ -16,10 +16,10 @@ module sdf (
 );
 
     /* verilator lint_off UNUSEDSIGNAL */
-    wire [26:0] cube_dist, sphere_dist, cross_dist, diff_dist;
+    // wire [26:0] cube_dist, sphere_dist, cross_dist, diff_dist;
     // wire [26:0] cube_dist, cross_dist;
     // wire [26:0] cube_dist, cross_dist, tetra_dist;
-    // wire [26:0] cross_dist, tetra_dist;
+    wire [26:0] cross_dist, tetra_dist;
     // wire [26:0] sphere_dist, cube_dist, tetra_dist;
     wire [26:0] q_x, q_y, q_z;
     VEC_mod_pow_two MOD (
@@ -94,8 +94,8 @@ module sdf (
         .point_x(a_x),
         .point_y(a_y),
         .point_z(a_z),
-        .size(27'h5f80000),
-        .distance(distance)
+        .size(27'h5ef6666),
+        .distance(cross_dist)
     );
     // sdf_difference #(
     //     .SDF_A_PIPELINE_CYCLES(9),
@@ -106,23 +106,23 @@ module sdf (
     //     .i_dist_b(cube_dist),
     //     .o_dist(diff_dist)
     // );
-    // sdf_union #(
-    //     .SDF_A_PIPELINE_CYCLES(11),
-    //     .SDF_B_PIPELINE_CYCLES(1)
-    // ) UNION (
-    //     .clk(clk),
-    //     .i_dist_a(diff_dist),
-    //     .i_dist_b(cross_dist),
-    //     .o_dist(distance)
-    // );
+    sdf_union #(
+        .SDF_A_PIPELINE_CYCLES(5),
+        .SDF_B_PIPELINE_CYCLES(1)
+    ) UNION (
+        .clk(clk),
+        .i_dist_a(tetra_dist),
+        .i_dist_b(cross_dist),
+        .o_dist(distance)
+    );
 
-    // tetrahedron TETRA (
-    //     .clk(clk),
-    //     .point_x(a_x),
-    //     .point_y(a_y),
-    //     .point_z(a_z),
-    //     .distance(tetra_dist)
-    // );
+    tetrahedron TETRA (
+        .clk(clk),
+        .point_x(a_x),
+        .point_y(a_y),
+        .point_z(a_z),
+        .distance(tetra_dist)
+    );
 
 
     // menger MENG (

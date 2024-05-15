@@ -64,8 +64,9 @@
 
 <body>
 	<article id="article">
-		<h1>Audio Reactive Visualizations Using Machine Learning and a Custom Raymarching GPU</h1>
-<p><em>By Michael Crum (mmc323) and Antti Meriluoto (ahm234)</em></p>
+		<h1>Audio Reactive Visualizations Using Machine Learning and a Custom FPGA Raymarching GPU</h1>
+<p><em>By Michael Crum (mmc323@cornell.edu) and Antti Meriluoto (ahm234@cornell.edu)</em></p>
+<p><img src="./assets/banner.webp" alt="Banner"></p>
 <h2>Introduction</h2>
 <p>In a tradition as old as time, sights and sounds are often paired together to induce emotion in the observer.
 Incredible reactions can be created with careful pairings of the two, although the exact relation between image and audio is, as with many things distinctly human, difficult to pin down precisely.
@@ -79,8 +80,7 @@ In this write-up, we will summarize the various techniques used to realize our f
 <h2>Sentiment Analysis</h2>
 <p><em>section in progress</em></p>
 <h2>FPGA-Based Raymarching GPU</h2>
-<h3>Background</h3>
-<h4>The ray marching algorithm</h4>
+<h3>The ray marching algorithm</h3>
 <p>For brevity, this section will offer an abridged description of the raymarching algorithm.
 If you wish to learn more about the algorithm, Michael <a href="https://michael-crum.com/raymarching/">has written a full article about it on his website</a> (with pretty demos too!).</p>
 <p>Raymarching is a form of <a href="https://en.wikipedia.org/wiki/Physically_based_rendering">physically based rendering</a>: rendering techniques that model the interaction of lights and physical objects to emulate real-world vision.
@@ -148,7 +148,7 @@ I won’t go over all of the operations here, but I’ll leave<a href="https://i
 Being an iterative solution, it is also well suited to be broken up into multiple clock cycles on the FPGA.
 Notice also that each pixel is computed completely independently, perfect for massive parallelization.
 This is the exact purpose of a GPU and the reason they are so valuable for graphical applications.</p>
-<h4>Floating point and vector math on an FPGA</h4>
+<h3>Floating point and vector math on an FPGA</h3>
 <p>To have any hope at running the ray marching algorithm, we need a fractional representation that will run on the FPGA.
 The traditional solution to this problem is using a fixed-point representation, but this comes with trade-offs either in magnitude or precision.
 Because ray marching operates over a wide range of magnitudes, fixed-point was off the table.
@@ -202,7 +202,6 @@ This way pixels can take multiple rides through the pipeline according to their 
 It also provides a variable refresh rate, where low-effort pixels can continue getting rerendered while high-effort pixels render more slowly in the background.
 This gives the illusion of snappy responsiveness during camera movement while allowing for high detail on close inspection.
 As a final benefit, it allows for rendering high-complexity scenes that would otherwise require too many resources to render in a single pipeline.</p>
-<h2>Implementation</h2>
 <h3>Handling Pipelines Without Going Insane</h3>
 <p>The floating point library I used requires two cycles for a floating point add and five cycles for an inverse square root.
 This introduced pipelining requirements all over the project in order to keep relevant data available at the correct cycle.
@@ -241,7 +240,7 @@ endmodule
 This is required because input <code>i_a</code> will be updated every cycle, and will have a new value by the time <code>FpInvSqrt</code>'s output becomes valid for use in the multiply.
 This snippet is a trivial example, but the system was crucial for other parts of the code that must pipeline up to ten diffent values.</p>
 <h3>Pixel to Ray</h3>
-<p>As mentioned in the background section, a the ray corresponding to a pixel can be calculated in the following way:</p>
+<p>As mentioned in the background section, the ray corresponding to a pixel can be calculated in the following way:</p>
 <pre><code>vec2 xy = coordinate.xy - resolution.xy / 2.0;
 float z = resolution.y / tan(radians(field_of_view) / 2.0);
 vec3 ray = normalize(vec3(xy, -z));
@@ -320,65 +319,110 @@ VEC_3x3_mult oh_god (
     .o_z(o_z)
 );
 </code></pre>
+<p>From here on out we won't show full verilog functions, instead showing block diagrams of their functions.
+If you're interested in the full code, you can find it on <a href="https://github.com/usedhondacivic/fractal_gpu">Michael’s GitHub page</a>.</p>
 <h3>Ray marching core</h3>
+<p>The ray marching core is build from the following GLSL model:</p>
+<pre><code>rayInfo raymarch() {
+    vec3 dir = getPixelRay();
+    float depth = MIN_DIST;
+    for (int i = 0; i &lt; MAX_MARCHING_STEPS; i++) {
+        float dist = sceneSDF(u_camera + depth * dir);
+        if (dist &lt; EPSILON) {
+            return rayInfo(vec3(1.0, 1.0, 1.0)));
+        }
+        depth += dist;
+        if (depth &gt;= MAX_DIST) {
+            return rayInfo(vec3(0.0, 0.0, 0.0));
+        }
+    }
+    return rayInfo(vec3(0.0, 0.0, 0.0));
+}
+</code></pre>
+<p>The main pain point here is the sheer number of inputs that need to be pipelined and kept in synchronization.
+Between ray marching cores, each of which represents one iteration of the for loop, we must keep track of:</p>
+<ul>
+<li>current point (x, y, z)</li>
+<li>current depth</li>
+<li>pixel location (x, y)</li>
+<li>ray corresponding to that pixel (x, y, z)</li>
+</ul>
+<p>On top of that, the SDF has a variable pipeline length depending on the scene, so the whole system has to be parameterized based on that quantity.
+The following block diagram ignores those details, but you can find the gory details <a href="https://github.com/usedhondacivic/fractal_gpu/blob/main/verilator/raymarcher.v">in the code base</a>.</p>
+<p><img src="./assets/ray_core_diagram.svg" alt="Ray marching core diagram"></p>
+<p><em>Figure X: Diagram of a raymarching core.</em></p>
 <h3>SDFs</h3>
+<p>When calculating an SDF is similar to the other math in this write up, and a large collection of equations <a href="https://iquilezles.org/articles/distfunctions/">can be found here</a>.
+To show how different the hardware requirements for two primatives can be, here's the block diagrams for a sphere vs a cube:</p>
+<p><img src="./assets/sdf_sphere_diagram.svg" alt="Ray marching core diagram"></p>
+<p><em>Figure X: Diagram of a sphere's SDF.</em></p>
+<p><img src="./assets/sdf_cube_diagram.svg" alt="Cube SDF diagram"></p>
+<p><em>Figure X: Diagram of a cube's SDF.</em></p>
+<p>As mentioned in the background section, SDF's can also be combined. This, once again, becomes tricky with pipelining.
+It is crutial that the faster SDF in the operation (in terms of clock cycles till a valid output) is pipelined to match the latency of the slower SDF.
+We used module parameters to make our operations robust to this:</p>
+<pre><code class="language-verilog">box BOX (
+    .clk(clk),
+    .point_x(a_x),
+    .point_y(a_y),
+    .point_z(a_z),
+    .dim_x(`ONE),
+    .dim_y(`ONE),
+    .dim_z(`ONE),
+    .distance(cube_dist)
+);
+sphere BALL (
+    .clk(clk),
+    .point_x(a_x),
+    .point_y(a_y),
+    .point_z(a_z),
+    .radius(`ONE_POINT_THREE),
+    .distance(sphere_dist)
+);
+sdf_union #(
+    .SDF_A_PIPELINE_CYCLES(9),
+    .SDF_B_PIPELINE_CYCLES(11),
+) UNION (
+    .clk(clk),
+    .i_dist_a(sphere_dist),
+    .i_dist_b(cube_dist),
+    .o_dist(distance)
+);
+</code></pre>
+<p>Verilog code for all of the SDFs I used and some basic operations (union, difference) <a href="https://github.com/usedhondacivic/fractal_gpu/tree/main/verilator/sdf">can be found here</a>.</p>
 <h3>Color calculation and the VGA driver</h3>
-<h2>Details</h2>
-<p>With the floating point and vector math libraries implemented, the Verilog was largely the same as the GLSL, with the major exceptions of pipeline and display buffer handling.</p>
-<p>Pipelining refers to breaking up a complex operation into steps that can be spread out over multiple clock cycles.
-Each step runs independently, however, and each step can be busy working on a different input at the same time.
-This means that data is output as quickly as it is input, save for a delay for the first input to reach the end of the pipeline.</p>
-<p>While writing pipelined code, synchronization is extremely important.
-Imagine we have some function, add(), that takes a clock cycle to complete.
-You additionally have three inputs, x, y, and z.
-To sum the three numbers, you may naively write:</p>
-<pre><code>
-a = add(x, y)
-
-b = add(a, z)
-
-</code></pre>
-<p>However, this will give you the wrong result.
-Let <eq><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">x_n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></eq> represent the input for variable x on clock cycle n.
-On clock cycle 2, a will be the sum of x<sub>1</sub> and y<sub>1</sub> because of the latency the add function creates.
-However, z will be z<sub>2</sub>, the input from the current cycle, resulting in b being the sum of x<sub>1</sub>, y<sub>1, </sub>and z<sub>2</sub>.
-If the pipeline is being used efficiently, z<sub>1</sub> is not equal to z<sub>2</sub> and the operation will fail.
-Instead, a pipeline register for z must be introduced to artificially keep z at the same pace as x and y.</p>
-<p>In the code for the GPU, you will often see blocks that look like this:</p>
-<pre><code>reg [9:0] pixel_x_pipe[PIPELINE_STAGES:0], pixel_y_pipe[PIPELINE_STAGES:0];
-
-always @(posedge clk) begin
-
-    pixel_x_pipe[0] &lt;= pixel_x;
-
-    pixel_y_pipe[0] &lt;= pixel_y;
-
-end
-
-genvar i;
-
-generate
-
-    for (i = 0; i &lt; PIPELINE_STAGES; i = i + 1) begin : g_ray_pipeline
-
-        always @(posedge clk) begin
-
-            pixel_x_pipe[i+1] &lt;= pixel_x_pipe[i];
-
-            pixel_y_pipe[i+1] &lt;= pixel_y_pipe[i];
-
-         end
-
-    end
-
-endgenerate
-</code></pre>
-<p>We use these blocks to generate pipeline registers of a length controlled by the PIPELINE_STAGES parameter.
-The code can then write and read values from the registers at relevant pipeline latencies.
-This greatly reduces the mental overhead associated with keeping track of pipeline synchronization and allows us to debug the pipeline length by tweaking a single value.</p>
-<p>For the display buffer, we utilized M10K memory to hold a 10 bit color representation for each pixel.</p>
-<p>The other details in the code are better explained through the detailed comments we’ve left in the codebase, which can be found on <a href="https://github.com/usedhondacivic/fractal_gpu">Michael’s GitHub page</a>.</p>
-<h3>Bugs, issues, and future work</h3>
+<p>The ray marching pipeline outputs general information about the scene, but another step is required to translate that information into a pixel color.
+We abstracted this mapping into a module that takes in a distance from the ray marcher, and outputs a color.
+This is a rather simplistic system, and most ray marching renderers utilize other information like iterations before converence, surface normals, and material ID's to decide on a final color.
+For our application however, we decided it was best to keep it simple.</p>
+<p>To choose the color of a pixel, the floating point distance is shifted left by a certain amount for each color channel.
+The float is then converted into an int, and the lower bits are taken as value for that color.
+The shift amount is a parameter read over PIO, allowing the HPS to change the mood of the render through adjustments to the periodicity of each color.
+For additional control, we also have flags to selectively turn off each channel.</p>
+<h2>Bugs, issues, and future work</h2>
+<p>This project was really pushed the FPGA to it's limits, and it unsuprisingly began to come appart at the seams.
+This is evident when you watch the demos of some more complicated scenes, and notice the intense artifacting.
+Because simulation shows much better results, we believe this has something to do with violating the timing constraints of the FGPA fabric, although there are likely several bugs in our code.</p>
+<p>Nonetheless, the project was ideated as a way of conveying emotion through mixed media, and glitches or not, we think it was very effective at achieving that goal.</p>
+<h2>Appendix</h2>
+<h3>Permissions</h3>
+<p>The group approves this report for inclusion on the course website.</p>
+<p>The group approves the video for inclusion on the course youtube channel.</p>
+<h3>Code listing</h3>
+<p><a href="https://github.com/usedhondacivic/fractal_gpu/tree/main/verilator/sdf">Complete source code</a></p>
+<h3>Specific Tasks</h3>
+<p>Michael:</p>
+<ul>
+<li>Prototyping and development of the GPU's Verilog</li>
+<li>Integration testing with the FPGA</li>
+<li>Camera controls and movement sequences</li>
+</ul>
+<p>Antti:</p>
+<ul>
+<li>Train and deploy machine learning model to perform sentiment anaylsis on songs</li>
+<li>Apply the model to affect models and movement within the graphics module to evoke the appropriate emotion for the song</li>
+</ul>
+<h3>References</h3>
 
 	</article>
 	<div id="right_pad"></div>

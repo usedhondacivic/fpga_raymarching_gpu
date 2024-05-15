@@ -67,7 +67,7 @@ module top (
         .red_shift(10),
         .green_shift(8),
         .blue_shift(6),
-        .fog_shift(2),
+        .fog_shift(1),
         .red_enable(1),
         .green_enable(1),
         .blue_enable(1),

@@ -7,8 +7,8 @@
 // `define EPSILON 27'h1ee6666 // 0.1
 `define EPSILON 27'h1e11eb8 //0.01
 // `define EPSILON 27'h1f26666 // 0.2
-// `define MAX_DIST 27'h2180000
-`define MAX_DIST 27'h2124000 // 50
+`define MAX_DIST 27'h2150000
+// `define MAX_DIST 27'h2124000 // 50
 // `define MAX_DIST 27'h20d0000
 // glsl float z = u_resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
 // see get_fov_magic_num.c and fractal.frag
@@ -193,7 +193,7 @@ module frag_to_world_vector (
 endmodule
 
 module ray_stage #(
-    parameter SDF_STAGES = 5
+    parameter SDF_STAGES = 9
 ) (
     input clk,
     input [3:0] repetition_pow,
@@ -349,7 +349,7 @@ rayInfo raymarch() {
 }
 */
 module raymarcher #(
-    parameter ITR_PER_LOOP = 4,
+    parameter ITR_PER_LOOP = 50,
     parameter FRAG_DIR_PIPELINE_CYCLES = 8,
     parameter PIPELINE_ARR_SIZE = ITR_PER_LOOP + FRAG_DIR_PIPELINE_CYCLES
 ) (
