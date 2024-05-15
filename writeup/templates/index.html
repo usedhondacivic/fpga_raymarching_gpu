@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>Audio Reactive Ray Marching GPU</title>
+
+	<!-- seo -->
+	<meta name="author" content="Michael Crum, Antti Meriluoto">
+	<meta name="description" content="FPGA implementation of a audio reactive ray marching GPU">
+	<meta name="keywords" content="portfolio,developer,robotics,personal">
+
+	<!-- display -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+
+	<!-- icon -->
+	<link rel="icon" type="image/png" sizes="32x32" href="../global_assets/icons/favicon-32x32.png" />
+	<link rel="icon" type="image/png" sizes="16x16" href="../global_assets/icons/favicon-16x16.png" />
+
+	<!-- stylesheets -->
+	<link rel="stylesheet" href="./styles/index.css">
+	<link rel="stylesheet" href="./styles/highlight/styles/base16/bright.min.css">
+	<link rel="stylesheet" href="./styles/katex/katex.min.css">
+
+	<!-- syntax highlighting-->
+	<script src="../styles/highlight/highlight.min.js"></script>
+	<script src="../styles/highlight/languages/verilog.min.js"></script>
+	<script>
+		hljs.highlightAll();
+	</script>
+
+	<!-- latex support-->
+	<script defer src="../styles/katex/katex.min.js"></script>
+
+	<!-- font -->
+	<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
+
+	<!-- iFrame optimization -->
+	<script>
+		checkVisibility();
+		document.addEventListener("scroll", (event) => {
+			checkVisibility();
+		});
+
+		function checkVisibility() {
+			const frames = document.getElementsByTagName("iframe");
+			for (var i = 0; i < frames.length; i++) {
+				frame = frames[i];
+				if (isInViewport(frame)) {
+					frame.style.visibility = "visible";
+				} else {
+					frame.style.visibility = "hidden";
+				}
+			}
+		}
+
+		function isInViewport(elm) {
+			var rect = elm.getBoundingClientRect();
+			var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+			return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
+		}
+	</script>
+</head>
+
+<body>
+	<article id="article">
+		<!-- CONTENT -->
+	</article>
+	<div id="right_pad"></div>
+</body>
+
+</html>

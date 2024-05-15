@@ -1,0 +1,19 @@
+{
+  "name": "static-page-gen",
+  "version": "1.0.0",
+  "description": "Static page generator for my portfolio / blog website",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Michael Crum",
+  "license": "MIT",
+  "dependencies": {
+    "fluent-ffmpeg": "^2.1.2",
+    "fs": "0.0.1-security",
+    "katex": "^0.16.4",
+    "markdown-it": "^13.0.1",
+    "markdown-it-texmath": "^1.0.0",
+    "minimist": "^1.2.8"
+  }
+}
