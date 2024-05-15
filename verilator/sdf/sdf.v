@@ -16,11 +16,11 @@ module sdf (
 );
 
     /* verilator lint_off UNUSEDSIGNAL */
-    // wire [26:0] cube_dist, sphere_dist, cross_dist, diff_dist;
+    wire [26:0] cube_dist, sphere_dist, cross_dist, diff_dist;
     // wire [26:0] cube_dist, cross_dist;
     // wire [26:0] cube_dist, cross_dist, tetra_dist;
     // wire [26:0] cross_dist, tetra_dist;
-    wire [26:0] sphere_dist, cube_dist, tetra_dist;
+    // wire [26:0] sphere_dist, cube_dist, tetra_dist;
     wire [26:0] q_x, q_y, q_z;
     VEC_mod_pow_two MOD (
         .i_clk  (clk),
@@ -81,22 +81,22 @@ module sdf (
     //     .dim_z(`ONE),
     //     .distance(cube_dist)
     // );
-    sphere BALL (
+    // sphere BALL (
+    //     .clk(clk),
+    //     .point_x(a_x),
+    //     .point_y(a_y),
+    //     .point_z(a_z),
+    //     .radius(`ONE_POINT_THREE),
+    //     .distance(sphere_dist)
+    // );
+    inf_cross CROSS (
         .clk(clk),
         .point_x(a_x),
         .point_y(a_y),
         .point_z(a_z),
-        .radius(`ONE_POINT_THREE),
+        .size(27'h5f80000),
         .distance(distance)
     );
-    // inf_cross CROSS (
-    //     .clk(clk),
-    //     .point_x(q_x),
-    //     .point_y(q_y),
-    //     .point_z(q_z),
-    //     .size(27'h5f80000),
-    //     .distance(cross_dist)
-    // );
     // sdf_difference #(
     //     .SDF_A_PIPELINE_CYCLES(9),
     //     .SDF_B_PIPELINE_CYCLES(11)
@@ -104,7 +104,7 @@ module sdf (
     //     .clk(clk),
     //     .i_dist_a(sphere_dist),
     //     .i_dist_b(cube_dist),
-    //     .o_dist(distance)
+    //     .o_dist(diff_dist)
     // );
     // sdf_union #(
     //     .SDF_A_PIPELINE_CYCLES(11),

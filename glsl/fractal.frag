@@ -98,7 +98,6 @@ vec3 fragToWorldVector() {
             vec3(0.0, 0.0, 0.0),
             vec3(0.0, 1.0, 0.0)
         ) * normalize(vec3(xy, -z));
-    // Seems like you don't need this normalize
     return normalize(viewDir.xyz);
 }
 
@@ -108,7 +107,7 @@ rayInfo raymarch() {
     for (int i = 0; i < MAX_MARCHING_STEPS; i++) {
         float dist = sceneSDF(u_camera + depth * dir);
         if (dist < EPSILON) {
-            return rayInfo(vec3(1.0, 1.0, 1.0) * (MAX_MARCHING_STEPS / (i * 5)));
+            return rayInfo(vec3(1.0, 1.0, 1.0) * (MAX_MARCHING_STEPS / (i * 100.0)) + 0.2);
         }
         depth += dist;
         if (depth >= MAX_DIST) {

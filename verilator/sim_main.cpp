@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 	top->eval_step();
 	top->eval_end_step();
 
-	vec3 eye = { -5.0, -5.0, -5.0 };
+	vec3 eye = { -11.0, -11.0, -11.0 };
 	set_uniforms(top, eye);
 
 	// initialize frame rate
@@ -175,7 +175,8 @@ int main(int argc, char *argv[])
 			eye[0] = 7.0 * cos(frame_count * M_PI / 60.0);
 			eye[1] = 7.0 * sin(frame_count * M_PI / 60.0);
 			eye[2] = 7.0;
-			set_uniforms(top, eye);
+			// if (frame_count == 1)
+			// set_uniforms(top, eye);
 		}
 
 		top->eval();
