@@ -1,0 +1,154 @@
+@font-face {
+	font-family: Pacifico;
+	src: url(../fonts/Pacifico/Pacifico-Regular.ttf);
+}
+
+@font-face {
+	font-family: SourceCodePro;
+	font-weight: 400;
+	src: url(../fonts/Source_Code_Pro/static/SourceCodePro-Regular.ttf);
+}
+
+
+@font-face {
+	font-family: DejaVuSansMono;
+	src: url(../fonts/dejavu-sans-mono/DejaVuSansMono.ttf);
+}
+
+@font-face {
+	font-family: RobotoMono;
+	src: url(../fonts/roboto_mono/RobotoMono-VariableFont_wght.ttf);
+}
+
+@font-face {
+	font-family: CodecPro;
+	src: url(../fonts/codec_pro/CodecPro-Regular.ttf);
+}
+
+html {
+	min-height: 100vh;
+	background-color: #141414;
+}
+
+body {
+	font-family: RobotoMono, DejaVuSansMono, SourceCodePro, monospace;
+	color: #fefff5;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-top: 50px;
+	padding-bottom: 50px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	font-family: CodecPro, DejaVuMono, SourceCodePro, monospace;
+}
+
+h2 {
+	font-size: 1.8em;
+}
+
+h3 {
+	font-size: 1.4em;
+}
+
+article {
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 900px;
+	min-width: 600px;
+	width: 100%;
+	overflow-wrap: anywhere;
+	flex-shrink: 0.2;
+	display: table-cell;
+	vertical-align: middle;
+}
+
+article img {
+	width: auto;
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 100%;
+	height: auto;
+	max-height: 900px;
+	display: block;
+}
+
+article h1 {
+	font-size: 2.5em;
+	margin-bottom: 5px;
+}
+
+article h2,
+h3,
+h4 {
+	margin-bottom: 15px;
+	margin-top: 40px;
+}
+
+article em {
+	opacity: 0.7;
+}
+
+article blockquote {
+	border-left: 2px solid #fefff5;
+	padding-left: 10px;
+	margin-left: 10px;
+}
+
+article a {
+	text-decoration: none;
+	color: aqua;
+}
+
+article iframe {
+	width: 100%;
+	aspect-ratio: 9/5;
+	border: none;
+}
+
+pre {
+	white-space: pre-wrap;
+	/* Since CSS 2.1 */
+	white-space: -moz-pre-wrap;
+	/* Mozilla, since 1999 */
+	white-space: -pre-wrap;
+	/* Opera 4-6 */
+	white-space: -o-pre-wrap;
+	/* Opera 7 */
+	word-wrap: break-word;
+	/* Internet Explorer 5.5+ */
+}
+
+@media only screen and (max-width: 1000px) {
+	body {
+		flex-direction: column;
+		align-items: center;
+		align-content: center;
+		padding-left: 50px;
+		padding-right: 50px;
+	}
+
+	article {
+		order: -1;
+		margin-right: 50px;
+		min-width: 0px;
+	}
+}
+
+@media only screen and (max-width: 500px) {
+	body {
+		padding-left: 10px !important;
+		padding-right: 10px !important;
+		padding-top: 10px !important;
+		margin: 5px;
+		margin-top: 50px;
+	}
+
+	h1 {
+		margin-top: 15px !important;
+	}
+}
