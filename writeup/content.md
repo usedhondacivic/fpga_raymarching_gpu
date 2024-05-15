@@ -57,13 +57,9 @@ The process is well-researched in computer graphics and is computed using the in
 For our virtual camera, this operation boils down to just a couple of operations:
 
 ```
-
 vec2 xy = coordinate.xy - resolution.xy / 2.0;
-
-float z = resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
-
+float z = resolution.y / tan(radians(field_of_view) / 2.0);
 vec3 view_direction = normalize(vec3(xy, -z));
-
 ```
 
 With per-pixel rays calculated, we can begin tracing them backward into the scene.
@@ -142,7 +138,7 @@ GLSL is a C-like language specifically for writing shaders (programs that run pe
 The GLSL implementation is only 100 lines and can be found in the appendix under fractal frag.
 We used this reference implementation to render the Serpinski pyramid fractal (Figure X).
 
-![alt_text](./assets/serpinski.png)
+![Serpinski Pyramid](./assets/serpinski.png)
 
 
 _Figure X: Serpinski pyramid rendered with GLSL_
@@ -159,7 +155,7 @@ See Figure X for an example of Verilated VGA output.
 
 ![Verilated VGA output](./assets/verilated_vga.png)
 
-_Figure X: Ray marched output rendered with SDL_
+_Figure X: Output of Verilated model rendered with SDL_
 
 
 ### Architecture
@@ -172,32 +168,179 @@ Because the algorithm itself takes up multiple clock cycles and the SDF evaluati
 One pixel/ray combo is passed in per clock cycle, and, once per clock cycle, the core spits out the same pixel and ray information coupled with a new value of $p$.
 The cores can be chained together to achieve multiple stages of iteration per clock cycle.
 
+![Simplified pipeline architecture](./assets/pipeline_architecture.svg)
+
 _Figure X: Simplified pipeline architecture_
 
 The number of cores that can be chained together is dependent on the available hardware on the FPGA.
 Because calculating more complicated SDFs takes additional hardware, the number of stages is also inversely proportional to the complexity of the scene.
-For simple scenes (e.g.
-a single cube), up to six cores can be chained together.
+For simple scenes (e.g. a single cube), up to six cores can be chained together.
 This drops to three or even two for more interesting scenes and quickly becomes detrimental to the quality of the rendering.
 Truthfully, even a six-iteration ray marcher offers subpar rendering results, as shown in figure X.
 
-_Figure X: A cube rendered with six iterations_
+![](./assets/maybe_a_cube.jpg)
 
-To fix this issue, the architecture had to be revised to allow pixels to reenter the pipeline if they need further refinement.
+_Figure X: A "cube" rendered with six iterations_
+
+To do better the architecture must be revised to allow pixels to reenter the pipeline if they need further refinement.
 With this strategy, each pixel/ray is evaluated in the last core to see if it has intersected the scene.
 If it has, a new pixel is pushed into the pipeline and a global pixel index is incremented to represent the next pixel in line.
 If it has not intersected with the scene yet, it is fed back into the first core, and the pixel index is not incremented.
 This way pixels can take multiple rides through the pipeline according to their needs.
+
+![Updated pipeline architecture](./assets/updated_pipeline_architecture.svg)
 
 _Figure X: Updated pipeline architecture_
 
 This architecture provides an unbounded number of iterations to the pixels that need them, allowing for much crisper and more detailed renders.
 It also provides a variable refresh rate, where low-effort pixels can continue getting rerendered while high-effort pixels render more slowly in the background.
 This gives the illusion of snappy responsiveness during camera movement while allowing for high detail on close inspection.
-As a final benefit, it allows for high-complexity scenes that would otherwise get clipped by the low iteration count.
+As a final benefit, it allows for rendering high-complexity scenes that would otherwise require too many resources to render in a single pipeline.
 
 
-### Implementation
+## Implementation
+
+### Handling Pipelines Without Going Insane
+
+The floating point library I used requires two cycles for a floating point add and five cycles for an inverse square root.
+This introduced pipelining requirements all over the project in order to keep relevant data available at the correct cycle.
+Hand writing each pipeline stage would be infurating and error prone, so we adopted a system that to handle pipeline registers for us using generate statements. As an example:
+
+```
+module FP_sqrt #(
+    parameter PIPELINE_STAGES = 4
+) (
+    input i_clk,
+    input [26:0] i_a,
+    output [26:0] o_sqrt
+);
+    wire [26:0] inv_sqrt;
+    reg  [26:0] i_a_pipe [PIPELINE_STAGES:0];
+    FpInvSqrt inv_sq (
+        .iCLK(i_clk),
+        .iA(i_a),
+        .oInvSqrt(inv_sqrt)
+    );
+    FpMul recip (
+        .iA(inv_sqrt),
+        .iB(i_a_pipe[PIPELINE_STAGES]),
+        .oProd(o_sqrt)
+    );
+    genvar i;
+    generate
+        for (i = 0; i < PIPELINE_STAGES; i = i + 1) begin : g_ray_pipeline
+            always @(posedge i_clk) begin
+                i_a_pipe[0] = i_a;
+                i_a_pipe[i+1] <= i_a_pipe[i];
+            end
+        end
+    endgenerate
+endmodule
+```
+
+This snippet creates a series of pipeline registers of length `PIPELINE_STAGES`, and pushes data through the pipeline on each clock cycle.
+This is required because input `i_a` will be updated every cycle, and will have a new value by the time `FpInvSqrt`'s output becomes valid for use in the multiply.
+This snippet is a trivial example, but the system was crucial for other parts of the code that must pipeline up to ten diffent values.
+
+### Pixel to Ray
+
+As mentioned in the background section, a the ray corresponding to a pixel can be calculated in the following way:
+
+```
+vec2 xy = coordinate.xy - resolution.xy / 2.0;
+float z = resolution.y / tan(radians(field_of_view) / 2.0);
+vec3 ray = normalize(vec3(xy, -z));
+```
+
+This assumes a camera that always looks straight forward, however, which is a bit boring. To spice things up, we added a [look at matrix](https://medium.com/@carmencincotti/lets-look-at-magic-lookat-matrices-c77e53ebdf78). Because the camera movement will be computed on the HPS, we computed the matrix in C and transfered it over PIO to the FPGA.
+
+```
+vec2 xy = coordinate.xy - resolution.xy / 2.0;
+float z = resolution.y / tan(radians(FIELD_OF_VIEW) / 2.0);
+vec3 ray = lookAt(
+    -camera_pos,
+    vec3(0.0, 0.0, 0.0),
+    vec3(0.0, 1.0, 0.0)
+) * normalize(vec3(xy, -z));
+```
+
+At first glance these operations seem intimidating the execute on an FPGA, specifically the divisions and tan operation.
+However, `resolution` and `field_of_view` are both constant, so anything involving them can be precomputed. In fact, the entire `z` assignment boils down to a constant.
+All other operations are linear, and can be computed with the vector math library we created. Calculating a ray takes 9 cycles, but is pipelined. Here's what the operation looks like in Verilog:
+
+```
+wire signed [`CORDW:0] x_signed, y_signed, x_adj, y_adj;
+assign x_signed = {1'b0, i_x};
+assign y_signed = {1'b0, i_y};
+
+assign x_adj = x_signed - (`SCREEN_WIDTH >> 1);
+assign y_adj = y_signed - (`SCREEN_HEIGHT >> 1);
+wire [26:0] x_fp, y_fp, z_fp, res_x_fp, res_y_fp;
+Int2Fp px_fp (
+    .iInteger({{5{x_adj[`CORDW]}}, x_adj[`CORDW:0]}),
+    .oA(x_fp)
+);
+Int2Fp py_fp (
+    .iInteger({{5{y_adj[`CORDW]}}, y_adj[`CORDW:0]}),
+    .oA(y_fp)
+);
+Int2Fp calc_res_x_fp (
+    .iInteger(`SCREEN_WIDTH),
+    .oA(res_x_fp)
+);
+Int2Fp calc_res_y_fp (
+    .iInteger(`SCREEN_HEIGHT),
+    .oA(res_y_fp)
+);
+FpMul z_calc (
+    .iA(res_y_fp),
+    .iB(`FOV_MAGIC_NUMBER),
+    .oProd(z_fp)
+);
+wire [26:0] x_norm_fp, y_norm_fp, z_norm_fp;
+VEC_normalize hi (
+    .i_clk(i_clk),
+    .i_x(x_fp),
+    .i_y(y_fp),
+    .i_z(z_fp),
+    .o_norm_x(x_norm_fp),
+    .o_norm_y(y_norm_fp),
+    .o_norm_z(z_norm_fp)
+);
+wire [26:0] z_neg_fp;
+FpNegate negate_z (
+    .iA(z_norm_fp),
+    .oNegative(z_neg_fp)
+);
+VEC_3x3_mult oh_god (
+    .i_clk(i_clk),
+    .i_m_1_1(look_at_1_1),
+    .i_m_1_2(look_at_1_2),
+    .i_m_1_3(look_at_1_3),
+    .i_m_2_1(look_at_2_1),
+    .i_m_2_2(look_at_2_2),
+    .i_m_2_3(look_at_2_3),
+    .i_m_3_1(look_at_3_1),
+    .i_m_3_2(look_at_3_2),
+    .i_m_3_3(look_at_3_3),
+    .i_x(x_norm_fp),
+    .i_y(y_norm_fp),
+    .i_z(z_neg_fp),
+    .o_x(o_x),
+    .o_y(o_y),
+    .o_z(o_z)
+);
+```
+
+### Ray marching core
+
+
+
+### SDFs
+
+### Color calculation and the VGA driver
+
+## Details
 
 With the floating point and vector math libraries implemented, the Verilog was largely the same as the GLSL, with the major exceptions of pipeline and display buffer handling.
 
@@ -219,7 +362,7 @@ b = add(a, z)
 ```
 
 However, this will give you the wrong result.
-Let x<sub>n</sub> represent the input for variable x on clock cycle n.
+Let $x_n$ represent the input for variable x on clock cycle n.
 On clock cycle 2, a will be the sum of x<sub>1</sub> and y<sub>1</sub> because of the latency the add function creates.
 However, z will be z<sub>2</sub>, the input from the current cycle, resulting in b being the sum of x<sub>1</sub>, y<sub>1, </sub>and z<sub>2</sub>.
 If the pipeline is being used efficiently, z<sub>1</sub> is not equal to z<sub>2</sub> and the operation will fail.
@@ -242,7 +385,7 @@ genvar i;
 
 generate
 
-    for (i = 0; i &lt; PIPELINE_STAGES; i = i + 1) begin : g_ray_pipeline
+    for (i = 0; i < PIPELINE_STAGES; i = i + 1) begin : g_ray_pipeline
 
         always @(posedge clk) begin
 
