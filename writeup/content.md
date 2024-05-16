@@ -14,16 +14,43 @@ For our final project, we chose to attempt a unique approach to the problem, uti
 We used machine learning to extract emotional meaning from the music, which in turn impacted the ray marched visuals generated on the FPGA.
 In this write-up, we will summarize the various techniques used to realize our final product.
 
-
 ## Results
 
 Although it’s somewhat unconventional to show results at the beginning of the write-up, seeing the final product might help you visualize what we’re going on about in the following sections.
 
-_I’ll insert pictures/videos here in the final website_
+<iframe src="https://www.youtube.com/embed/videoseries?si=JtC5gJRozmR-BWEw&amp;list=PLmn5J0zkYYOtlyqh27yB4OJvCweu7AEqI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## Sentiment Analysis
 
-_section in progress_
+Setting up a model to predict the sentiment of a given song primarily involved two different development procedures: application development and machine learning engineering. In this section, we will provide an overview of the various components involved in designing the Python application that ultimately served as the user interface for the project. 
+
+### Spotify Web Development API
+
+We decided that the accessibility and usability of a streaming based API would provide an effective framework to build up our app. We opted to use the Spotify for Web Development API as we are both routine users of Spotify and the API provides a simple interface for querying songs and playlists. We leveraged the Spotipy python library, which is the python implementation of the Spotify Web Dev API. The most convenient functionality offered by Spotify’s API was the ability to query a song and extract a set of features from Spotify’s database which quantified various aspects of a song’s musical signature. A combination of these features were what we used to generate the input vectors for our model.
+
+Another convenient feature of Spotify’s Web Dev API was the ability to query entire playlists worth of tracks. Because of this feature, we decided to create a public Spotify playlist that would encompass our training data. We assembled this playlist by compiling a list of around 421 songs that we were familiar with, thus enabling us to relatively easily assign emotional labels to songs. 
+
+Before attempting to train our first classification model, we needed to extract our training data and store it longterm, thus avoiding the need to repeatedly make calls to the API, which turned out to be quite a bottleneck on the development process. A number of times throughout the development process, we accidentally exceeded the query limit enforced by the Spotify API and were cut off from making queries for indeterminate amounts of time. To avoid this, we wrote a library that used the OpenPyxl Python library to store data from playlists into a spreadsheet that we could later access. 
+
+### Initial Attempts at Training a Model
+
+Once our training dataset was stored in a .xlsx format, we went through and added an additional column to our spreadsheet that contained the emotions we associated with each song. Originally, we opted for five emotional categories: Anxious, Depressed, Bittersweet, Angry, Happy. We used 10 musical features provided by Spotify to train our initial models : acousticness, danceability, energy, valence, instrumentalness, key, loudness, mode, speechiness, and tempo. We gained a lot of direction for this segment of the project from this link on Medium.
+
+To train our model, we created a three-layer MLP using Pytorch, with a hidden layer of variable width. We used a ReLU function as our activation function. We used Cross-Entropy as our loss function. Originally our model was incapable of meaningfully classifying any song, and we surmised that this was due to a combination of reasons related to how we set up the task. First, the features we extracted from the API were not scaled properly when used as inputs. Some of the features had ranges that far exceeded other features, so it was probable that our model was overfitting to such features in the input space. Once we scaled every feature to belong to the same range (floats in the range of [0.0, 1.0]), we still noticed that the model was struggling to classify songs according to our categories. We reasoned that it was best to minimize the complexity of the task, get a model working, then upscale the complexity once a satisfactory baseline was achieved. 
+
+We decided to cut the input space down to what we qualitatively surmised to be the two most meaningful features, energy and valence, and the output space down to a simple binary classification task. After training a linear classification model that could categorize songs into two emotional categories, positive and negative, with an approximately 70% test accuracy, we decided to try to scale up the complexity of the task to something more interesting. 
+
+### Final Model Overview
+
+After an extended process of experimentation with different labeling schemes, finetuning various hyperparameters such as learning rates, the number of training epochs, the size of the hidden layer, and the number of hidden layers, and introducing new features to the input space, we ultimately created a model that we deemed satisfactory for a demonstration’s sake. The model achieved about an 85% test accuracy classifying songs into three emotional categories: Happy, Sad, and Angry. 
+
+In the end, we used a three layer MLP with an input size of 2, a hidden layer of width 10, and an output size of 3. The two features we utilized were energy and valence since these seemed to have the highest correlation with song emotions. 
+
+### Designing a User Interface
+
+The final requirement for the Python side of the project was designing the user interface. This required a simple GUI, which we implemented using TKInter, and a communication protocol between the app and the process running on the HPS. The GUI we designed in the end includes a button that prompts the user to update the song being visualized. We instantiate an instance of a Spotipy object using the login credentials of a user, in this case, Antti, which in turn lets us call a function to query the song the user is currently playing. This in turn enables the online functionality of the project, as we use this call to extract the features from a currently played song, perform a forward pass through our trained model, then communicate the outputted emotion, along with the energy feature of the song, to the HPS. The predicted emotion and the energy feature combined enabled us to create 6 different visual configurations for our custom GPU. 
+
+We experimented with a number of different designs for the communication protocol between the Python process and the HPS, but we ultimately decided to use SFTP since it was simple to implement. Once we set up SSH keys between the PC hosting the app and the SoC, each click of the button on the GUI would perform a remote file transfer of a .txt file containing the aforementioned information. On the HPS side, we use this information to configure the visuals in accordance with the emotional signature of the currently playing song by communicating it over to the FPGA using PIO connections over the Lightweight AXI Bus. 
 
 ## FPGA-Based Raymarching GPU
 
@@ -431,6 +458,10 @@ For additional control, we also have flags to selectively turn off each channel.
 This project was really pushed the FPGA to it's limits, and it unsuprisingly began to come appart at the seams.
 This is evident when you watch the demos of some more complicated scenes, and notice the intense artifacting.
 Because simulation shows much better results, we believe this has something to do with violating the timing constraints of the FGPA fabric, although there are likely several bugs in our code.
+
+In terms of the MLP, there were a number of shortcomings associated with the architecture. For starters, it is difficult to meaningfully classify every song into just 3 emotional categories since this leaves little room for ambiguity. In addition, the two input features, though they provide an excellent means of discerning the emotional flavor of a song, are not infallible. Valence is a quantity assigned to reflect the positivity of the lyrical content of a song, however, in certain cases, a song might somewhat erroneously have a high valence feature, thus leading the model to assign more positivity to it. 
+
+There are a few ways we could try to circumvent these issues. For the purposes of the demonstration, we sacrificed model complexity for higher test accuracy. With enough time and experimentation, it could be possible to create a model that classifies songs into a larger set of categories without sacrificing its performance. Moreover, certain additional features which we did not incorporate into our final model like key could play a huge role in discerning the emotional content of a song. 
 
 Nonetheless, the project was ideated as a way of conveying emotion through mixed media, and glitches or not, we think it was very effective at achieving that goal.
 
