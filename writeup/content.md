@@ -486,7 +486,7 @@ The group approves the video for inclusion on the course's YouTube channel.
 
 ### Code listing
 
-[Complete source code](https://github.com/usedhondacivic/fractal_gpu/tree/main/verilator/sdf)
+[Complete source code](https://github.com/usedhondacivic/fractal_gpu/tree/main)
 
 ### Specific Tasks
 
