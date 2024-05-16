@@ -510,7 +510,7 @@ Resources on ray marching:
 
 Verilog:
 * [Verilator](https://verilator.org/guide/latest/), a phenomenal Verilog simulation tool
-* [Tutorail for VGA simulation using Verilator and SDL](https://projectf.io/posts/verilog-sim-verilator-sdl/)
+* [Tutorial for VGA simulation using Verilator and SDL](https://projectf.io/posts/verilog-sim-verilator-sdl/)
 * [ECE 5760 1.8.18 floating point implementation](https://people.ece.cornell.edu/land/courses/ece5760/DE1_SOC/HPS_peripherials/Floating_Point_index.html)
 
 DE1-SoC:
