@@ -1,4 +1,4 @@
-# Audio Reactive Visualizations Using Machine Learning and a Custom FPGA Raymarching GPU
+# Audio Reactive Visualizations Using Machine Learning and a Custom FPGA Ray Marching GPU
 
 *By Michael Crum (mmc323@cornell.edu) and Antti Meriluoto (ahm234@cornell.edu)*
 
@@ -17,6 +17,9 @@ In this write-up, we will summarize the various techniques used to realize our f
 ## Results
 
 Although it’s somewhat unconventional to show results at the beginning of the write-up, seeing the final product might help you visualize what we’re going on about in the following sections.
+All visuals are generated in real time on the FPGA.
+
+<iframe src="https://www.youtube.com/embed/r3ks_tyS-WY?si=1HaImeeaQmbGLfbe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 <iframe src="https://www.youtube.com/embed/videoseries?si=JtC5gJRozmR-BWEw&amp;list=PLmn5J0zkYYOtlyqh27yB4OJvCweu7AEqI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
@@ -201,7 +204,7 @@ For simple scenes (e.g. a single cube), up to six cores can be chained together.
 This drops to three or even two for more interesting scenes and quickly becomes detrimental to the quality of the rendering.
 Truthfully, even a six-iteration ray marcher offers subpar rendering results, as shown in figure X.
 
-![](./assets/maybe_a_cube.jpg)
+![A "cube" poorly rendered with only six iterations](./assets/maybe_a_cube.jpg)
 
 _Figure X: A "cube" rendered with six iterations_
 
@@ -219,6 +222,10 @@ This architecture provides an unbounded number of iterations to the pixels that 
 It also provides a variable refresh rate, where low-effort pixels can continue getting rerendered while high-effort pixels render more slowly in the background.
 This gives the illusion of snappy responsiveness during camera movement while allowing for high detail on close inspection.
 As a final benefit, it allows for rendering high-complexity scenes that would otherwise require too many resources to render in a single pipeline.
+
+![A much sharper cube](./assets/sharp_cube.jpg)
+
+_Figure X: A much better cube rendered with variable iterations per pixel_
 
 ### Handling Pipelines Without Going Insane
 
@@ -428,16 +435,20 @@ sphere BALL (
     .radius(`ONE_POINT_THREE),
     .distance(sphere_dist)
 );
-sdf_union #(
+sdf_difference #(
     .SDF_A_PIPELINE_CYCLES(9),
     .SDF_B_PIPELINE_CYCLES(11),
-) UNION (
+) DIFF (
     .clk(clk),
     .i_dist_a(sphere_dist),
     .i_dist_b(cube_dist),
     .o_dist(distance)
 );
 ```
+
+![Cube SDF diagram](./assets/cube_minus_sphere.png)
+
+_Figure X: A cube with a sphere subtracted from it._
 
 Verilog code for all of the SDFs I used and some basic operations (union, difference) [can be found here](https://github.com/usedhondacivic/fractal_gpu/tree/main/verilator/sdf).
 

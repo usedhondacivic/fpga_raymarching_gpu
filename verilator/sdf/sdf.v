@@ -6,6 +6,7 @@
 `define FOUR 27'h2040000
 `define NEG_FOUR 27'h6040000
 
+/* verilator lint_off UNUSEDSIGNAL */
 module sdf (
     input clk,
     input [26:0] point_x,
@@ -15,36 +16,35 @@ module sdf (
     output [26:0] distance
 );
 
-    /* verilator lint_off UNUSEDSIGNAL */
-    // wire [26:0] cube_dist, sphere_dist, cross_dist, diff_dist;
+    wire [26:0] cube_dist, sphere_dist, cross_dist, diff_dist;
     // wire [26:0] cube_dist, cross_dist;
     // wire [26:0] cube_dist, cross_dist, tetra_dist;
-    wire [26:0] cross_dist, tetra_dist;
+    // wire [26:0] cross_dist, tetra_dist;
     // wire [26:0] sphere_dist, cube_dist, tetra_dist;
-    wire [26:0] q_x, q_y, q_z;
-    VEC_mod_pow_two MOD (
-        .i_clk  (clk),
-        .i_a_x  (point_x),
-        .i_a_y  (point_y),
-        .i_a_z  (point_z),
-        .i_pow  (repetition_pow),
-        .o_mod_x(q_x),
-        .o_mod_y(q_y),
-        .o_mod_z(q_z)
-    );
-    wire [26:0] a_x, a_y, a_z;
-    VEC_add ADD_A (
-        .i_clk  (clk),
-        .i_a_x  (q_x),
-        .i_a_y  (q_y),
-        .i_a_z  (q_z),
-        .i_b_x  (~q_x[26] ? `NEG_FOUR : `FOUR),
-        .i_b_y  (~q_y[26] ? `NEG_FOUR : `FOUR),
-        .i_b_z  (~q_z[26] ? `NEG_FOUR : `FOUR),
-        .o_add_x(a_x),
-        .o_add_y(a_y),
-        .o_add_z(a_z)
-    );
+    // wire [26:0] q_x, q_y, q_z;
+    // VEC_mod_pow_two MOD (
+    //     .i_clk  (clk),
+    //     .i_a_x  (point_x),
+    //     .i_a_y  (point_y),
+    //     .i_a_z  (point_z),
+    //     .i_pow  (repetition_pow),
+    //     .o_mod_x(q_x),
+    //     .o_mod_y(q_y),
+    //     .o_mod_z(q_z)
+    // );
+    // wire [26:0] a_x, a_y, a_z;
+    // VEC_add ADD_A (
+    //     .i_clk  (clk),
+    //     .i_a_x  (q_x),
+    //     .i_a_y  (q_y),
+    //     .i_a_z  (q_z),
+    //     .i_b_x  (~q_x[26] ? `NEG_FOUR : `FOUR),
+    //     .i_b_y  (~q_y[26] ? `NEG_FOUR : `FOUR),
+    //     .i_b_z  (~q_z[26] ? `NEG_FOUR : `FOUR),
+    //     .o_add_x(a_x),
+    //     .o_add_y(a_y),
+    //     .o_add_z(a_z)
+    // );
     // wire [26:0] b_x, b_y, b_z;
     // VEC_add ADD_B (
     //     .i_clk  (clk),
@@ -71,32 +71,32 @@ module sdf (
     //     .o_add_z(a_z)
     // );
 
-    // box BOX (
-    //     .clk(clk),
-    //     .point_x(a_x),
-    //     .point_y(a_y),
-    //     .point_z(a_z),
-    //     .dim_x(`ONE),
-    //     .dim_y(`ONE),
-    //     .dim_z(`ONE),
-    //     .distance(cube_dist)
-    // );
+    box BOX (
+        .clk(clk),
+        .point_x(point_x),
+        .point_y(point_y),
+        .point_z(point_z),
+        .dim_x(`ONE),
+        .dim_y(`ONE),
+        .dim_z(`ONE),
+        .distance(distance)
+    );
     // sphere BALL (
     //     .clk(clk),
-    //     .point_x(a_x),
-    //     .point_y(a_y),
-    //     .point_z(a_z),
+    //     .point_x(point_x),
+    //     .point_y(point_y),
+    //     .point_z(point_z),
     //     .radius(`ONE_POINT_THREE),
     //     .distance(sphere_dist)
     // );
-    inf_cross CROSS (
-        .clk(clk),
-        .point_x(a_x),
-        .point_y(a_y),
-        .point_z(a_z),
-        .size(27'h5ef6666),
-        .distance(cross_dist)
-    );
+    // inf_cross CROSS (
+    //     .clk(clk),
+    //     .point_x(a_x),
+    //     .point_y(a_y),
+    //     .point_z(a_z),
+    //     .size(27'h5ef6666),
+    //     .distance(cross_dist)
+    // );
     // sdf_difference #(
     //     .SDF_A_PIPELINE_CYCLES(9),
     //     .SDF_B_PIPELINE_CYCLES(11)
@@ -104,25 +104,25 @@ module sdf (
     //     .clk(clk),
     //     .i_dist_a(sphere_dist),
     //     .i_dist_b(cube_dist),
-    //     .o_dist(diff_dist)
+    //     .o_dist(distance)
     // );
-    sdf_union #(
-        .SDF_A_PIPELINE_CYCLES(5),
-        .SDF_B_PIPELINE_CYCLES(1)
-    ) UNION (
-        .clk(clk),
-        .i_dist_a(tetra_dist),
-        .i_dist_b(cross_dist),
-        .o_dist(distance)
-    );
-
-    tetrahedron TETRA (
-        .clk(clk),
-        .point_x(a_x),
-        .point_y(a_y),
-        .point_z(a_z),
-        .distance(tetra_dist)
-    );
+    // sdf_union #(
+    //     .SDF_A_PIPELINE_CYCLES(5),
+    //     .SDF_B_PIPELINE_CYCLES(1)
+    // ) UNION (
+    //     .clk(clk),
+    //     .i_dist_a(tetra_dist),
+    //     .i_dist_b(cross_dist),
+    //     .o_dist(distance)
+    // );
+    //
+    // tetrahedron TETRA (
+    //     .clk(clk),
+    //     .point_x(a_x),
+    //     .point_y(a_y),
+    //     .point_z(a_z),
+    //     .distance(tetra_dist)
+    // );
 
 
     // menger MENG (

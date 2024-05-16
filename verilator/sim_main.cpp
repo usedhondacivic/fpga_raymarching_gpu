@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 	top->eval_step();
 	top->eval_end_step();
 
-	vec3 eye = { -11.0, -11.0, -11.0 };
+	vec3 eye = { -3.0, -4.0, -5.0 };
 	set_uniforms(top, eye);
 
 	// initialize frame rate
@@ -172,9 +172,9 @@ int main(int argc, char *argv[])
 			SDL_RenderPresent(sdl_renderer);
 			frame_count++;
 
-			eye[0] = 7.0 * cos(frame_count * M_PI / 60.0);
-			eye[1] = 7.0 * sin(frame_count * M_PI / 60.0);
-			eye[2] = 7.0;
+			eye[0] = 3.0 * cos(frame_count * M_PI / 60.0);
+			eye[1] = 3.0 * sin(frame_count * M_PI / 60.0);
+			eye[2] = 3.0;
 			// if (frame_count == 1)
 			// set_uniforms(top, eye);
 		}

@@ -64,7 +64,7 @@
 
 <body>
 	<article id="article">
-		<h1>Audio Reactive Visualizations Using Machine Learning and a Custom FPGA Raymarching GPU</h1>
+		<h1>Audio Reactive Visualizations Using Machine Learning and a Custom FPGA Ray Marching GPU</h1>
 <p><em>By Michael Crum (mmc323@cornell.edu) and Antti Meriluoto (ahm234@cornell.edu)</em></p>
 <p><img src="./assets/banner.webp" alt="Banner"></p>
 <h2>Introduction</h2>
@@ -75,7 +75,9 @@ Of course, this difficulty only seems to make the challenge more appealing to cr
 We used machine learning to extract emotional meaning from the music, which in turn impacted the ray marched visuals generated on the FPGA.
 In this write-up, we will summarize the various techniques used to realize our final product.</p>
 <h2>Results</h2>
-<p>Although it’s somewhat unconventional to show results at the beginning of the write-up, seeing the final product might help you visualize what we’re going on about in the following sections.</p>
+<p>Although it’s somewhat unconventional to show results at the beginning of the write-up, seeing the final product might help you visualize what we’re going on about in the following sections.
+All visuals are generated in real time on the FPGA.</p>
+<iframe src="https://www.youtube.com/embed/r3ks_tyS-WY?si=1HaImeeaQmbGLfbe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 <iframe src="https://www.youtube.com/embed/videoseries?si=JtC5gJRozmR-BWEw&amp;list=PLmn5J0zkYYOtlyqh27yB4OJvCweu7AEqI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 <h2>Sentiment Analysis</h2>
 <p>Setting up a model to predict the sentiment of a given song primarily involved two different development procedures: application development and machine learning engineering. In this section, we will provide an overview of the various components involved in designing the Python application that ultimately served as the user interface for the project.</p>
@@ -203,7 +205,7 @@ Because calculating more complicated SDFs takes additional hardware, the number 
 For simple scenes (e.g. a single cube), up to six cores can be chained together.
 This drops to three or even two for more interesting scenes and quickly becomes detrimental to the quality of the rendering.
 Truthfully, even a six-iteration ray marcher offers subpar rendering results, as shown in figure X.</p>
-<p><img src="./assets/maybe_a_cube.webp" alt=""></p>
+<p><img src="./assets/maybe_a_cube.webp" alt="A &quot;cube&quot; poorly rendered with only six iterations"></p>
 <p><em>Figure X: A &quot;cube&quot; rendered with six iterations</em></p>
 <p>To do better the architecture must be revised to allow pixels to reenter the pipeline if they need further refinement.
 With this strategy, each pixel/ray is evaluated in the last core to see if it has intersected the scene.
@@ -216,6 +218,8 @@ This way pixels can take multiple rides through the pipeline according to their 
 It also provides a variable refresh rate, where low-effort pixels can continue getting rerendered while high-effort pixels render more slowly in the background.
 This gives the illusion of snappy responsiveness during camera movement while allowing for high detail on close inspection.
 As a final benefit, it allows for rendering high-complexity scenes that would otherwise require too many resources to render in a single pipeline.</p>
+<p><img src="./assets/sharp_cube.webp" alt="A much sharper cube"></p>
+<p><em>Figure X: A much better cube rendered with variable iterations per pixel</em></p>
 <h3>Handling Pipelines Without Going Insane</h3>
 <p>The floating point library I used requires two cycles for a floating point add and five cycles for an inverse square root.
 This introduced pipelining requirements all over the project in order to keep relevant data available at the correct cycle.
@@ -393,16 +397,18 @@ sphere BALL (
     .radius(`ONE_POINT_THREE),
     .distance(sphere_dist)
 );
-sdf_union #(
+sdf_difference #(
     .SDF_A_PIPELINE_CYCLES(9),
     .SDF_B_PIPELINE_CYCLES(11),
-) UNION (
+) DIFF (
     .clk(clk),
     .i_dist_a(sphere_dist),
     .i_dist_b(cube_dist),
     .o_dist(distance)
 );
 </code></pre>
+<p><img src="./assets/cube_minus_sphere.webp" alt="Cube SDF diagram"></p>
+<p><em>Figure X: A cube with a sphere subtracted from it.</em></p>
 <p>Verilog code for all of the SDFs I used and some basic operations (union, difference) <a href="https://github.com/usedhondacivic/fractal_gpu/tree/main/verilator/sdf">can be found here</a>.</p>
 <h3>Color calculation and the VGA driver</h3>
 <p>The ray marching pipeline outputs general information about the scene, but another step is required to translate that information into a pixel color.
