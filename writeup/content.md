@@ -17,7 +17,7 @@ In this write-up, we will summarize the various techniques used to realize our f
 ## Results
 
 Although it’s somewhat unconventional to show results at the beginning of the write-up, seeing the final product might help you visualize what we’re going on about in the following sections.
-All visuals are generated in real time on the FPGA.
+All visuals are generated in real-time on the FPGA.
 
 <iframe src="https://www.youtube.com/embed/r3ks_tyS-WY?si=1HaImeeaQmbGLfbe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
@@ -29,17 +29,17 @@ Setting up a model to predict the sentiment of a given song primarily involved t
 
 ### Spotify Web Development API
 
-We decided that the accessibility and usability of a streaming based API would provide an effective framework to build up our app. We opted to use the Spotify for Web Development API as we are both routine users of Spotify and the API provides a simple interface for querying songs and playlists. We leveraged the Spotipy python library, which is the python implementation of the Spotify Web Dev API. The most convenient functionality offered by Spotify’s API was the ability to query a song and extract a set of features from Spotify’s database which quantified various aspects of a song’s musical signature. A combination of these features were what we used to generate the input vectors for our model.
+We decided that the accessibility and usability of a streaming-based API would provide an effective framework to build up our app. We opted to use the Spotify for Web Development API as we are both routine users of Spotify and the API provides a simple interface for querying songs and playlists. We leveraged the Spotipy Python library, which is the Python implementation of the Spotify Web Dev API. The most convenient functionality offered by Spotify’s API was the ability to query a song and extract a set of features from Spotify’s database which quantified various aspects of a song’s musical signature. A combination of these features was what we used to generate the input vectors for our model.
 
 Another convenient feature of Spotify’s Web Dev API was the ability to query entire playlists worth of tracks. Because of this feature, we decided to create a public Spotify playlist that would encompass our training data. We assembled this playlist by compiling a list of around 421 songs that we were familiar with, thus enabling us to relatively easily assign emotional labels to songs. 
 
-Before attempting to train our first classification model, we needed to extract our training data and store it longterm, thus avoiding the need to repeatedly make calls to the API, which turned out to be quite a bottleneck on the development process. A number of times throughout the development process, we accidentally exceeded the query limit enforced by the Spotify API and were cut off from making queries for indeterminate amounts of time. To avoid this, we wrote a library that used the OpenPyxl Python library to store data from playlists into a spreadsheet that we could later access. 
+Before attempting to train our first classification model, we needed to extract our training data and store it long-term, thus avoiding the need to repeatedly make calls to the API, which turned out to be quite a bottleneck in the development process. Several times throughout the development process, we accidentally exceeded the query limit enforced by the Spotify API and were cut off from making queries for indeterminate amounts of time. To avoid this, we wrote a library that used the OpenPyxl Python library to store data from playlists into a spreadsheet that we could later access. 
 
 ### Initial Attempts at Training a Model
 
-Once our training dataset was stored in a .xlsx format, we went through and added an additional column to our spreadsheet that contained the emotions we associated with each song. Originally, we opted for five emotional categories: Anxious, Depressed, Bittersweet, Angry, Happy. We used 10 musical features provided by Spotify to train our initial models : acousticness, danceability, energy, valence, instrumentalness, key, loudness, mode, speechiness, and tempo. We gained a lot of direction for this segment of the project from this link on Medium.
+Once our training dataset was stored in a .xlsx format, we went through and added a column to our spreadsheet that contained the emotions we associated with each song. Originally, we opted for five emotional categories: Anxious, Depressed, Bittersweet, Angry, and Happy. We used 10 musical features provided by Spotify to train our initial models: acousticness, danceability, energy, valence, instrumentalness, key, loudness, mode, speechiness, and tempo. We gained a lot of direction for this segment of the project from this link on Medium.
 
-To train our model, we created a three-layer MLP using Pytorch, with a hidden layer of variable width. We used a ReLU function as our activation function. We used Cross-Entropy as our loss function. Originally our model was incapable of meaningfully classifying any song, and we surmised that this was due to a combination of reasons related to how we set up the task. First, the features we extracted from the API were not scaled properly when used as inputs. Some of the features had ranges that far exceeded other features, so it was probable that our model was overfitting to such features in the input space. Once we scaled every feature to belong to the same range (floats in the range of [0.0, 1.0]), we still noticed that the model was struggling to classify songs according to our categories. We reasoned that it was best to minimize the complexity of the task, get a model working, then upscale the complexity once a satisfactory baseline was achieved. 
+To train our model, we created a three-layer MLP using Pytorch, with a hidden layer of variable width. We used a ReLU function as our activation function. We used Cross-Entropy as our loss function. Originally our model was incapable of meaningfully classifying any song, and we surmised that this was due to a combination of reasons related to how we set up the task. First, the features we extracted from the API were not scaled properly when used as inputs. Some of the features had ranges that far exceeded other features, so it was probable that our model was overfitting to such features in the input space. Once we scaled every feature to belong to the same range (floats in the range of [0.0, 1.0]), we still noticed that the model was struggling to classify songs according to our categories. We reasoned that it was best to minimize the complexity of the task, get a model working, and then upscale the complexity once a satisfactory baseline was achieved. 
 
 We decided to cut the input space down to what we qualitatively surmised to be the two most meaningful features, energy and valence, and the output space down to a simple binary classification task. After training a linear classification model that could categorize songs into two emotional categories, positive and negative, with an approximately 70% test accuracy, we decided to try to scale up the complexity of the task to something more interesting. 
 
@@ -47,13 +47,13 @@ We decided to cut the input space down to what we qualitatively surmised to be t
 
 After an extended process of experimentation with different labeling schemes, finetuning various hyperparameters such as learning rates, the number of training epochs, the size of the hidden layer, and the number of hidden layers, and introducing new features to the input space, we ultimately created a model that we deemed satisfactory for a demonstration’s sake. The model achieved about an 85% test accuracy classifying songs into three emotional categories: Happy, Sad, and Angry. 
 
-In the end, we used a three layer MLP with an input size of 2, a hidden layer of width 10, and an output size of 3. The two features we utilized were energy and valence since these seemed to have the highest correlation with song emotions. 
+In the end, we used a three-layer MLP with an input size of 2, a hidden layer of width 10, and an output size of 3. The two features we utilized were energy and valence since these seemed to have the highest correlation with song emotions. 
 
 ### Designing a User Interface
 
-The final requirement for the Python side of the project was designing the user interface. This required a simple GUI, which we implemented using TKInter, and a communication protocol between the app and the process running on the HPS. The GUI we designed in the end includes a button that prompts the user to update the song being visualized. We instantiate an instance of a Spotipy object using the login credentials of a user, in this case, Antti, which in turn lets us call a function to query the song the user is currently playing. This in turn enables the online functionality of the project, as we use this call to extract the features from a currently played song, perform a forward pass through our trained model, then communicate the outputted emotion, along with the energy feature of the song, to the HPS. The predicted emotion and the energy feature combined enabled us to create 6 different visual configurations for our custom GPU. 
+The final requirement for the Python side of the project was designing the user interface. This required a simple GUI, which we implemented using TKInter, and a communication protocol between the app and the process running on the HPS. The GUI we designed in the end includes a button that prompts the user to update the song being visualized. We instantiate an instance of a Spotipy object using the login credentials of a user, in this case, Antti, which in turn lets us call a function to query the song the user is currently playing. This in turn enables the online functionality of the project, as we use this call to extract the features from a currently played song, perform a forward pass through our trained model, and then communicate the outputted emotion, along with the energy feature of the song, to the HPS. The predicted emotion and the energy feature combined enabled us to create 6 different visual configurations for our custom GPU. 
 
-We experimented with a number of different designs for the communication protocol between the Python process and the HPS, but we ultimately decided to use SFTP since it was simple to implement. Once we set up SSH keys between the PC hosting the app and the SoC, each click of the button on the GUI would perform a remote file transfer of a .txt file containing the aforementioned information. On the HPS side, we use this information to configure the visuals in accordance with the emotional signature of the currently playing song by communicating it over to the FPGA using PIO connections over the Lightweight AXI Bus. 
+We experimented with several different designs for the communication protocol between the Python process and the HPS, but we ultimately decided to use SFTP since it was simple to implement. Once we set up SSH keys between the PC hosting the app and the SoC, each click of the button on the GUI would perform a remote file transfer of a .txt file containing the aforementioned information. On the HPS side, we use this information to configure the visuals by the emotional signature of the currently playing song by communicating it over to the FPGA using PIO connections over the Lightweight AXI Bus. 
 
 ## FPGA-Based Raymarching GPU
 
@@ -73,11 +73,11 @@ For light from the scene to enter your eye, it must pass through one of these pi
 Suppose we calculate the vector from your eye through each pixel on the window.
 We can then use this vector to work backward and determine information about the photons that would enter through that pixel.
 From this information, we can determine the color of that pixel.
-Figure X visualizes this process for one pixel.
+Figure 1 visualizes this process for one pixel.
 
 ![alt_text](./assets/image_plane.png)
 
-_Figure X: From pixels to rays (Credit: [Michael Walczyk](https://michaelwalczyk.com/blog-ray-marching.html))_
+_Figure 1: From pixels to rays (Credit: [Michael Walczyk](https://michaelwalczyk.com/blog-ray-marching.html))_
 
 The process is well-researched in computer graphics and is computed using the inverse [camera projection matrix](https://en.wikipedia.org/wiki/Camera_matrix).
 For our virtual camera, this operation boils down to just a couple of operations:
@@ -107,18 +107,18 @@ return length(point) - radius;
 
 ```
 
-Such distance functions exist for all manner of primitives, both 2D and 3D (see Figure X).
+Such distance functions exist for all manner of primitives, both 2D and 3D (see Figure 2).
 
 ![alt_text](./assets/2d_sdf.webp)
 
 
-_Figure X: Raymarched primitives_
+_Figure 2: Raymarched primitives_
 
 Ray marching leverages SDFs to know how far it can **safely** step along a ray without intersecting with the scene.
 The process is as follows:
 
 1. Set point $p$ at the camera origin.
-2. Evaluate SDF to find minimum distance $d$ from the scene.
+2. Evaluate SDF to find the minimum distance $d$ from the scene.
     1. If $d < \epsilon$ (some small number), you’ve hit the scene
     2. Else continue
 3. Step $d$ units along the ray, ie $p += ray * d$
@@ -127,14 +127,14 @@ The process is as follows:
 It's important to notice that step 3 is **guaranteed** to not set $p$ inside of an object.
 Because $p$ starts in free space, and $d$ is the minimum distance to the scene along _any_ direction, stepping along _any ray by $d$ will cause the new distance to be >= 0.
 If the ray does intersect with the scene, $d$ will converge to zero, and the algorithm will register the point as an intersection.
-Figure X illustrates the algorithm on a 2D scene.
+Figure 3 illustrates the algorithm on a 2D scene.
 Each blue point is $p$ after some number of iterations, and each circle represents $d$ evaluated at $p$ for each iteration.
 
 <iframe src="https://michael-crum.com/ThreeJS-Raymarcher/2d_demo.html" title="2D Demo" style="visibility: visible;"></iframe>
 
-_Figure X: 2D ray marching demo_
+_Figure 3: 2D ray marching demo ([source code](https://github.com/usedhondacivic/ThreeJS-Raymarcher/blob/master/2d_demo.html))_
 
-SDFs of multiple objects can be combined simply by taking the minimum of their individual SDFs.
+SDFs of multiple objects can be combined simply by taking the minimum across their individual SDFs.
 Similar operations exist for intersection and difference.
 SDFs can also be deformed to scale, rotate, twist, and repeat the SDF throughout space.
 I won’t go over all of the operations here, but I’ll leave[ this excellent reference on the topic](https://iquilezles.org/articles/distfunctions/).
@@ -147,7 +147,7 @@ This is the exact purpose of a GPU and the reason they are so valuable for graph
 
 ### Floating point and vector math on an FPGA
 
-To have any hope at running the ray marching algorithm, we need a fractional representation that will run on the FPGA.
+To have any hope of running the ray marching algorithm, we need a fractional representation that will run on the FPGA.
 The traditional solution to this problem is using a fixed-point representation, but this comes with trade-offs either in magnitude or precision.
 Because ray marching operates over a wide range of magnitudes, fixed-point was off the table.
 We instead decided to use the [1.8.18 floating-point implementation](https://people.ece.cornell.edu/land/courses/ece5760/DE1_SOC/HPS_peripherials/Floating_Point_index.html) written by past students and improved by Bruce Land.
@@ -162,12 +162,12 @@ The library can be found in vector_ops.v in the appendix and includes dot produc
 Before launching into a full Verilog implementation, we created a reference implementation in GLSL (OpenGL Shading Language).
 GLSL is a C-like language specifically for writing shaders (programs that run per pixel on the GPU).
 The GLSL implementation is only 100 lines and can be found in the appendix under fractal frag.
-We used this reference implementation to render the Serpinski pyramid fractal (Figure X).
+We used this reference implementation to render the Serpinski pyramid fractal (Figure 4).
 
 ![Serpinski Pyramid](./assets/serpinski.png)
 
 
-_Figure X: Serpinski pyramid rendered with GLSL_
+_Figure 4: Serpinski pyramid rendered with GLSL_
 
 After verifying the GLSL design, we moved on to Verilog.
 Because compiling code for the FPGA takes many minutes, we looked for a simulation tool that could show VGA output without lengthy Quartus compile times.
@@ -177,11 +177,11 @@ We used [SDL](https://github.com/libsdl-org/SDL) to render the output VGA of our
 This [webpage from Project F](https://projectf.io/posts/verilog-sim-verilator-sdl/) was a great resource for setting up the system.
 Simulating this way allowed us to render 2-3 frames per second, far from real-time but many times faster than a full Quartus compile.
 Using this strategy we were able to quickly iterate on the design and fix bugs many times more efficiently than in previous labs.
-See Figure X for an example of Verilated VGA output.
+See Figure 5 for an example of Verilated VGA output.
 
 ![Verilated VGA output](./assets/verilated_vga.png)
 
-_Figure X: Output of Verilated model rendered with SDL_
+_Figure 5: Output of Verilated model rendered with SDL_
 
 
 ### Architecture
@@ -196,17 +196,17 @@ The cores can be chained together to achieve multiple stages of iteration per cl
 
 ![Simplified pipeline architecture](./assets/pipeline_architecture.svg)
 
-_Figure X: Simplified pipeline architecture_
+_Figure 6: Simplified pipeline architecture_
 
 The number of cores that can be chained together is dependent on the available hardware on the FPGA.
 Because calculating more complicated SDFs takes additional hardware, the number of stages is also inversely proportional to the complexity of the scene.
 For simple scenes (e.g. a single cube), up to six cores can be chained together.
 This drops to three or even two for more interesting scenes and quickly becomes detrimental to the quality of the rendering.
-Truthfully, even a six-iteration ray marcher offers subpar rendering results, as shown in figure X.
+Truthfully, even a six-iteration ray marcher offers subpar rendering results, as shown in Figure 7.
 
 ![A "cube" poorly rendered with only six iterations](./assets/maybe_a_cube.jpg)
 
-_Figure X: A "cube" rendered with six iterations_
+_Figure 7: A "cube" rendered with six iterations_
 
 To do better the architecture must be revised to allow pixels to reenter the pipeline if they need further refinement.
 With this strategy, each pixel/ray is evaluated in the last core to see if it has intersected the scene.
@@ -216,7 +216,7 @@ This way pixels can take multiple rides through the pipeline according to their 
 
 ![Updated pipeline architecture](./assets/updated_pipeline_architecture.svg)
 
-_Figure X: Updated pipeline architecture_
+_Figure 8: Updated pipeline architecture_
 
 This architecture provides an unbounded number of iterations to the pixels that need them, allowing for much crisper and more detailed renders.
 It also provides a variable refresh rate, where low-effort pixels can continue getting rerendered while high-effort pixels render more slowly in the background.
@@ -225,13 +225,13 @@ As a final benefit, it allows for rendering high-complexity scenes that would ot
 
 ![A much sharper cube](./assets/sharp_cube.jpg)
 
-_Figure X: A much better cube rendered with variable iterations per pixel_
+_Figure 9: A much better cube rendered with variable iterations per pixel_
 
 ### Handling Pipelines Without Going Insane
 
 The floating point library I used requires two cycles for a floating point add and five cycles for an inverse square root.
-This introduced pipelining requirements all over the project in order to keep relevant data available at the correct cycle.
-Hand writing each pipeline stage would be infurating and error prone, so we adopted a system that to handle pipeline registers for us using generate statements. As an example:
+This introduced pipelining requirements all over the project to keep relevant data available at the correct cycle.
+Handwriting each pipeline stage would be infuriating and error-prone, so we adopted a system that handles pipeline registers for us using generate statements. As an example:
 
 ```
 module FP_sqrt #(
@@ -267,7 +267,7 @@ endmodule
 
 This snippet creates a series of pipeline registers of length `PIPELINE_STAGES`, and pushes data through the pipeline on each clock cycle.
 This is required because input `i_a` will be updated every cycle, and will have a new value by the time `FpInvSqrt`'s output becomes valid for use in the multiply.
-This snippet is a trivial example, but the system was crucial for other parts of the code that must pipeline up to ten diffent values.
+This snippet is a trivial example, but the system was crucial for other parts of the code that must pipeline up to ten different values.
 
 ### Pixel to Ray
 
@@ -279,7 +279,7 @@ float z = resolution.y / tan(radians(field_of_view) / 2.0);
 vec3 ray = normalize(vec3(xy, -z));
 ```
 
-This assumes a camera that always looks straight forward, however, which is a bit boring. To spice things up, we added a [look at matrix](https://medium.com/@carmencincotti/lets-look-at-magic-lookat-matrices-c77e53ebdf78). Because the camera movement will be computed on the HPS, we computed the matrix in C and transfered it over PIO to the FPGA.
+This assumes a camera that always looks straightforward, however, which is a bit boring. To spice things up, we added a [look at matrix](https://medium.com/@carmencincotti/lets-look-at-magic-lookat-matrices-c77e53ebdf78). Because the camera movement will be computed on the HPS, we computed the matrix in C and transferred it over PIO to the FPGA.
 
 ```
 vec2 xy = coordinate.xy - resolution.xy / 2.0;
@@ -291,9 +291,9 @@ vec3 ray = lookAt(
 ) * normalize(vec3(xy, -z));
 ```
 
-At first glance these operations seem intimidating the execute on an FPGA, specifically the divisions and tan operation.
+At first glance, these operations seem intimidating the execute on an FPGA, specifically the divisions and tan operation.
 However, `resolution` and `field_of_view` are both constant, so anything involving them can be precomputed. In fact, the entire `z` assignment boils down to a constant.
-All other operations are linear, and can be computed with the vector math library we created. Calculating a ray takes 9 cycles, but is pipelined. Here's what the operation looks like in Verilog:
+All other operations are linear and can be computed with the vector math library we created. Calculating a ray takes 9 cycles, but is pipelined. Here's what the operation looks like in Verilog:
 
 ```
 wire signed [`CORDW:0] x_signed, y_signed, x_adj, y_adj;
@@ -359,12 +359,12 @@ VEC_3x3_mult oh_god (
 );
 ```
 
-From here on out we won't show full verilog functions, instead showing block diagrams of their functions.
+From here on out we won't show full Verilog functions, instead showing block diagrams of their functions.
 If you're interested in the full code, you can find it on [Michael’s GitHub page](https://github.com/usedhondacivic/fractal_gpu).
 
 ### Ray marching core
 
-The ray marching core is build from the following GLSL model:
+The ray marching core is built according to the following GLSL model:
 
 ```
 rayInfo raymarch() {
@@ -397,23 +397,23 @@ The following block diagram ignores those details, but you can find the gory det
 
 ![Ray marching core diagram](./assets/ray_core_diagram.svg)
 
-_Figure X: Diagram of a raymarching core._
+_Figure 10: Diagram of a raymarching core._
 
 ### SDFs
 
-When calculating an SDF is similar to the other math in this write up, and a large collection of equations [can be found here](https://iquilezles.org/articles/distfunctions/).
-To show how different the hardware requirements for two primatives can be, here's the block diagrams for a sphere vs a cube:
+When calculating an SDF is similar to the other math in this write-up, and a large collection of equations [can be found here](https://iquilezles.org/articles/distfunctions/).
+To show how different the hardware requirements for two primitives can be, compare the block diagrams for a sphere vs a cube:
 
 ![Ray marching core diagram](./assets/sdf_sphere_diagram.svg)
 
-_Figure X: Diagram of a sphere's SDF._
+_Figure 11: Diagram of a sphere's SDF._
 
 ![Cube SDF diagram](./assets/sdf_cube_diagram.svg)
 
-_Figure X: Diagram of a cube's SDF._
+_Figure 12: Diagram of a cube's SDF._
 
-As mentioned in the background section, SDF's can also be combined. This, once again, becomes tricky with pipelining.
-It is crutial that the faster SDF in the operation (in terms of clock cycles till a valid output) is pipelined to match the latency of the slower SDF.
+As mentioned in the background section, SDFs can also be combined. This, once again, becomes tricky with pipelining.
+The faster SDF in the operation (in terms of clock cycles till a valid output) must be pipelined to match the latency of the slower SDF.
 We used module parameters to make our operations robust to this:
 
 ```verilog
@@ -448,27 +448,27 @@ sdf_difference #(
 
 ![Cube SDF diagram](./assets/cube_minus_sphere.png)
 
-_Figure X: A cube with a sphere subtracted from it._
+_Figure 13: A cube with a sphere subtracted from it._
 
 Verilog code for all of the SDFs I used and some basic operations (union, difference) [can be found here](https://github.com/usedhondacivic/fractal_gpu/tree/main/verilator/sdf).
 
 ### Color calculation and the VGA driver
 
 The ray marching pipeline outputs general information about the scene, but another step is required to translate that information into a pixel color.
-We abstracted this mapping into a module that takes in a distance from the ray marcher, and outputs a color.
-This is a rather simplistic system, and most ray marching renderers utilize other information like iterations before converence, surface normals, and material ID's to decide on a final color.
-For our application however, we decided it was best to keep it simple.
+We abstracted this mapping into a module that takes in a distance from the ray marcher and outputs a color.
+This is a rather simplistic system, and most ray marching renderers utilize other information like iterations before convergence, surface normals, and material IDs to decide on a final color.
+For our application, however, we decided it was best to keep it simple.
 
 To choose the color of a pixel, the floating point distance is shifted left by a certain amount for each color channel.
-The float is then converted into an int, and the lower bits are taken as value for that color.
+The float is then converted into an int, and the lower bits are taken as the value for that color.
 The shift amount is a parameter read over PIO, allowing the HPS to change the mood of the render through adjustments to the periodicity of each color.
 For additional control, we also have flags to selectively turn off each channel.
 
 ## Bugs, issues, and future work
 
-This project was really pushed the FPGA to it's limits, and it unsuprisingly began to come appart at the seams.
-This is evident when you watch the demos of some more complicated scenes, and notice the intense artifacting.
-Because simulation shows much better results, we believe this has something to do with violating the timing constraints of the FGPA fabric, although there are likely several bugs in our code.
+This project pushed the FPGA to its limits, and it unsurprisingly began to come apart at the seams.
+This is evident when you watch the demos of some more complicated scenes and notice the intense visual artifacts.
+Because simulation shows much better results, we believe this has something to do with violating the timing constraints of the FGPA fabric, although there are likely several bugs in our code. Off by one bugs are almost impossible to avoid in such a deep pipeline.
 
 In terms of the MLP, there were a number of shortcomings associated with the architecture. For starters, it is difficult to meaningfully classify every song into just 3 emotional categories since this leaves little room for ambiguity. In addition, the two input features, though they provide an excellent means of discerning the emotional flavor of a song, are not infallible. Valence is a quantity assigned to reflect the positivity of the lyrical content of a song, however, in certain cases, a song might somewhat erroneously have a high valence feature, thus leading the model to assign more positivity to it. 
 
@@ -482,7 +482,7 @@ Nonetheless, the project was ideated as a way of conveying emotion through mixed
 
 The group approves this report for inclusion on the course website.
 
-The group approves the video for inclusion on the course youtube channel.
+The group approves the video for inclusion on the course's YouTube channel.
 
 ### Code listing
 
@@ -498,7 +498,24 @@ Michael:
 
 Antti:
 
-* Train and deploy machine learning model to perform sentiment anaylsis on songs
-* Apply the model to affect models and movement within the graphics module to evoke the appropriate emotion for the song
+* Train and deploy a machine-learning model to perform sentiment analysis on songs from the Spotify API
+* Apply the model to affect colors and movement within the graphics module to evoke the appropriate emotion for the song
+* Create a graphical user interface to interact with the visualization in real-time
 
 ### References
+
+Resources on ray marching:
+* [Inigo Quilez](https://iquilezles.org/), the entire website is a wealth of information on computer graphics
+* [A good tutorial for getting started](https://michaelwalczyk.com/blog-ray-marching.html)
+
+Verilog:
+* [Verilator](https://verilator.org/guide/latest/), a phenomenal Verilog simulation tool
+* [Tutorail for VGA simulation using Verilator and SDL](https://projectf.io/posts/verilog-sim-verilator-sdl/)
+* [ECE 5760 1.8.18 floating point implementation](https://people.ece.cornell.edu/land/courses/ece5760/DE1_SOC/HPS_peripherials/Floating_Point_index.html)
+
+DE1-SoC:
+* [Reference on M10k memory](https://people.ece.cornell.edu/land/courses/ece5760/DE1_SOC/Memory/index.html)
+* [System datasheet](https://people.ece.cornell.edu/land/courses/ece5760/DE1_SOC/DE1-SoC_User_manualv.1.2.2_revE.pdf)
+
+Class:
+* [ECE 5760 course site](https://people.ece.cornell.edu/land/courses/ece5760/), with many more resources on programming with the DE1-SoC
