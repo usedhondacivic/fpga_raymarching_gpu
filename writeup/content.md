@@ -393,7 +393,7 @@ Between ray marching cores, each of which represents one iteration of the for lo
 * ray corresponding to that pixel (x, y, z)
 
 On top of that, the SDF has a variable pipeline length depending on the scene, so the whole system has to be parameterized based on that quantity.
-The following block diagram ignores those details, but you can find the gory details [in the code base](https://github.com/usedhondacivic/fractal_gpu/blob/main/verilator/raymarcher.v).
+The following block diagram ignores those complications, but you can find the gory details [in the code base](https://github.com/usedhondacivic/fractal_gpu/blob/main/verilator/raymarcher.v).
 
 ![Ray marching core diagram](./assets/ray_core_diagram.svg)
 
