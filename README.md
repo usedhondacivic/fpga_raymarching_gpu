@@ -1,6 +1,6 @@
 # FPGA Ray Marching GPU
 
-A FPGA GPU for rendering ray marched scenes.
+FPGA based GPU for rendering ray marched scenes.
 
 First prototyped using GLSL, then implemented in Verilog and simulated with Verilator, then ported to the DE1SoC single board computer.
 SDL2 is used for Verilator VGA simulation.
